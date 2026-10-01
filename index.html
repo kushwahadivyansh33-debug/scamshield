@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Check suspicious messages and links with transparent, private, client-side scam detection heuristics."
+    />
+    <meta name="theme-color" content="#f7f8f4" />
+    <title>ScamShield — pause before you trust</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="ScamShield home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M16 3.5 27 8v7.3c0 7.1-4.8 11.3-11 13.2-6.2-1.9-11-6.1-11-13.2V8l11-4.5Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+            <path d="m11.1 15.7 3.2 3.2 6.8-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span>scam<span class="brand-light">shield</span></span>
+      </a>
+      <div class="privacy-pill"><span class="privacy-dot"></span> Private by design</div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+        <svg class="theme-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M17.1 12.2A7.2 7.2 0 0 1 7.8 2.9a7.3 7.3 0 1 0 9.3 9.3Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="theme-label">Dark</span>
+      </button>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-line"></span> A calmer way to check</div>
+          <h1 id="page-title">Pause before<br />you <span>trust.</span></h1>
+          <p class="hero-description">
+            Something feel off? Check a message or link for common scam warning signs—in seconds, right here in your browser.
+          </p>
+          <div class="hero-proof">
+            <span class="proof-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.5 16 5v4c0 3.9-2.6 6.2-6 7.3C6.6 15.2 4 12.9 4 9V5l6-2.5Z" stroke="currentColor" stroke-width="1.5"/><path d="m7.5 9.7 1.7 1.7 3.6-3.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span><strong>Your text stays yours.</strong> Nothing is uploaded or stored.</span>
+          </div>
+        </div>
+
+        <div class="analyzer-card">
+          <div class="card-heading">
+            <div>
+              <span class="step-label">THE QUICK CHECK</span>
+              <h2>What would you like to check?</h2>
+            </div>
+            <span class="sparkle-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="m12 2 1.9 7.1L21 11l-7.1 1.9L12 20l-1.9-7.1L3 11l7.1-1.9L12 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <p class="card-instruction">Paste a message or URL—or upload a screenshot or call recording to check it.</p>
+
+          <section class="voice-check" aria-labelledby="voice-title">
+            <div class="voice-heading">
+              <div>
+                <span class="voice-eyebrow">SCAMSHIELD VOICEGUARD</span>
+                <h3 id="voice-title">🎙️ Check a suspicious call</h3>
+                <p>Upload a voice recording to transcribe it and check for scam warning signs.</p>
+              </div>
+              <span class="voice-lock" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><rect x="3.2" y="8" width="13.6" height="9.5" rx="1.8" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 8V5.5a3.7 3.7 0 0 1 7.4 0V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+            <input id="voice-input" class="visually-hidden voice-input" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.webm,.flac,.aiff,.aif" aria-describedby="voice-status voice-privacy" />
+            <label class="voice-dropzone" id="voice-dropzone" for="voice-input" tabindex="0">
+              <span class="voice-upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L7.8 8.2M12 4l4.2 4.2M5 14.5v3.7A1.8 1.8 0 0 0 6.8 20h10.4a1.8 1.8 0 0 0 1.8-1.8v-3.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span class="voice-upload-copy"><strong>Choose a call recording</strong><span>or drag and drop an audio file</span></span>
+              <span class="voice-formats">MP3 · WAV · M4A · WEBM<br />up to 25 MB · 5 min</span>
+            </label>
+            <div class="voice-preview" id="voice-preview" hidden>
+              <audio id="voice-audio-preview" controls preload="metadata" aria-label="Preview of uploaded voice recording"></audio>
+              <div class="voice-file-info">
+                <strong id="voice-filename"></strong>
+                <span id="voice-progress">Ready to transcribe</span>
+                <progress id="voice-progress-bar" max="1" value="0" aria-label="Transcription progress" hidden></progress>
+              </div>
+              <button class="remove-screenshot" id="remove-voice" type="button" aria-label="Remove voice recording">×</button>
+            </div>
+            <div class="voice-steps" aria-label="Voice recording analysis steps">
+              <span><b>1</b> Upload</span><i aria-hidden="true">→</i>
+              <span><b>2</b> Transcribe</span><i aria-hidden="true">→</i>
+              <span><b>3</b> Analyze &amp; review</span>
+            </div>
+            <p class="voice-status" id="voice-status" role="status" aria-live="polite"></p>
+            <p class="voice-privacy" id="voice-privacy">Recording and transcript stay on this device. The pinned English speech model is downloaded from public CDNs on first use; no audio or transcript is uploaded. Transcription is English-only.</p>
+          </section>
+
+          <div class="input-divider"><span>OR UPLOAD A SCREENSHOT</span></div>
+          <section class="screenshot-check" aria-labelledby="screenshot-title">
+            <div class="screenshot-heading">
+              <div>
+                <h3 id="screenshot-title">Check a screenshot</h3>
+                <p>Choose or drop a screenshot. OCR and scam checks run in your browser.</p>
+              </div>
+              <span class="screenshot-lock" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><rect x="3.2" y="8" width="13.6" height="9.5" rx="1.8" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 8V5.5a3.7 3.7 0 0 1 7.4 0V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+            <input id="screenshot-input" class="visually-hidden screenshot-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-describedby="screenshot-status screenshot-privacy" />
+            <label class="screenshot-dropzone" id="screenshot-dropzone" for="screenshot-input" tabindex="0">
+              <span class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L7.8 8.2M12 4l4.2 4.2M5 14.5v3.7A1.8 1.8 0 0 0 6.8 20h10.4a1.8 1.8 0 0 0 1.8-1.8v-3.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span class="upload-copy"><strong>Upload a screenshot</strong><span>or drag and drop an image here</span></span>
+              <span class="upload-formats">PNG · JPG · WEBP · GIF · up to 10 MB</span>
+            </label>
+            <div class="screenshot-preview" id="screenshot-preview" hidden>
+              <img id="screenshot-image" alt="Preview of the selected screenshot" />
+              <div class="screenshot-file-info">
+                <strong id="screenshot-filename"></strong>
+                <span id="screenshot-progress">Ready to extract text</span>
+                <progress id="screenshot-progress-bar" max="1" value="0" aria-label="OCR progress" hidden></progress>
+              </div>
+              <button class="remove-screenshot" id="remove-screenshot" type="button" aria-label="Remove screenshot">×</button>
+            </div>
+            <div class="screenshot-steps" aria-label="Screenshot analysis steps">
+              <span><b>1</b> Upload</span><i aria-hidden="true">→</i>
+              <span><b>2</b> Extract text</span><i aria-hidden="true">→</i>
+              <span><b>3</b> Review report</span>
+            </div>
+            <p class="screenshot-status" id="screenshot-status" role="status" aria-live="polite"></p>
+            <p class="screenshot-privacy" id="screenshot-privacy">
+              Your image stays on this device. The OCR engine and English language data are downloaded when you first use this feature; no image or extracted text is uploaded.
+            </p>
+          </section>
+
+          <div class="input-divider"><span>OR PASTE TEXT</span></div>
+          <form id="analyzer-form" novalidate>
+            <label for="message-input" class="field-label">SUSPICIOUS MESSAGE OR LINK</label>
+            <div class="input-wrap">
+              <textarea
+                id="message-input"
+                name="message"
+                rows="6"
+                maxlength="10000"
+                placeholder="Paste a text, email, or website link here…"
+                aria-describedby="privacy-note character-count"
+                required
+              ></textarea>
+              <span class="input-decoration" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M8.2 10.8a3.2 3.2 0 0 0 4.5 0l3-3a3.2 3.2 0 0 0-4.5-4.5l-1.7 1.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11.8 9.2a3.2 3.2 0 0 0-4.5 0l-3 3a3.2 3.2 0 0 0 4.5 4.5l1.7-1.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+            <div class="field-meta">
+              <span id="privacy-note" class="privacy-note">
+                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3.3" y="7" width="9.4" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.3 7V4.8a2.7 2.7 0 0 1 5.4 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                Analyzed on your device
+              </span>
+              <span id="character-count">0 / 10,000</span>
+            </div>
+            <p class="form-error" id="form-error" role="alert" hidden>Please paste a message or link to check.</p>
+            <button class="analyze-button" type="submit">
+              <span>Check for warning signs</span>
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.2 10h11.6m0 0-4.8-4.8m4.8 4.8-4.8 4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+
+          <div class="try-example">
+            <span>Need an example?</span>
+            <button type="button" id="example-button">Try a sample message <span aria-hidden="true">↗</span></button>
+          </div>
+
+          <section class="result-panel" id="result-panel" aria-live="polite" aria-atomic="true" hidden>
+            <div class="result-top">
+              <div class="result-icon" id="result-icon" aria-hidden="true"></div>
+              <div class="result-heading">
+                <span class="result-kicker" id="result-kicker">ANALYSIS COMPLETE</span>
+                <h3 id="result-title"></h3>
+              </div>
+              <span class="risk-score" id="risk-score"></span>
+            </div>
+            <p class="result-summary" id="result-summary"></p>
+            <div class="result-reasons" id="result-reasons"></div>
+            <section class="scam-types" aria-labelledby="scam-types-title">
+              <div class="scam-types-heading">
+                <h4 id="scam-types-title">Scam type signals</h4>
+                <span class="scam-types-icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none"><path d="M3 16V10m4 6V5m5 11V8m4 8V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                </span>
+              </div>
+              <p class="scam-types-note">Heuristic match scores, not the probability that this is a scam.</p>
+              <div class="scam-type-list" id="scam-type-list"></div>
+            </section>
+              <section class="website-analysis" aria-labelledby="website-analysis-title">
+                <div class="website-analysis-heading">
+                  <div>
+                    <h4 id="website-analysis-title">Website analysis</h4>
+                    <p>On-device URL checks only. We don’t visit websites.</p>
+                  </div>
+                  <span class="website-analysis-icon" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.8 10h14.4M10 2.5c1.9 2 2.7 4.5 2.7 7.5s-.8 5.5-2.7 7.5C8.1 15.5 7.3 13 7.3 10s.8-5.5 2.7-7.5Z" stroke="currentColor" stroke-width="1.3"/></svg>
+                  </span>
+                </div>
+                <div class="website-list" id="website-list"></div>
+              </section>
+              <div class="advice-box">
+              <span class="advice-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.2a7.8 7.8 0 1 0 0 15.6 7.8 7.8 0 0 0 0-15.6Z" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v4.2m0-6.5v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </span>
+              <div><strong>What to do</strong><p id="result-advice"></p></div>
+            </div>
+            <button type="button" id="check-another" class="check-another">Check another message <span aria-hidden="true">↗</span></button>
+          </section>
+        </div>
+      </section>
+
+      <section class="how-section" aria-labelledby="how-title">
+        <div class="section-intro">
+          <span class="section-kicker">A LITTLE CLARITY GOES A LONG WAY</span>
+          <h2 id="how-title">What we look for.</h2>
+          <p>Scams often follow familiar patterns. This quick check points them out so you can make a more informed choice.</p>
+        </div>
+        <div class="signal-grid">
+          <article class="signal-card">
+            <span class="signal-number">01</span>
+            <span class="signal-icon signal-lilac" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 8.5h10.5a3.5 3.5 0 1 1 0 7H8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m8 12-3 3.5L8 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>Too good to be true</h3>
+            <p>Unexpected prizes, giveaways, or promises of easy money.</p>
+          </article>
+          <article class="signal-card">
+            <span class="signal-number">02</span>
+            <span class="signal-icon signal-peach" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v9l5.5 3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
+            </span>
+            <h3>Pressure to act now</h3>
+            <p>Urgent deadlines designed to stop you from thinking twice.</p>
+          </article>
+          <article class="signal-card">
+            <span class="signal-number">03</span>
+            <span class="signal-icon signal-mint" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Requests for secrets</h3>
+            <p>Asks for passwords, bank details, or personal information.</p>
+          </article>
+          <article class="signal-card">
+            <span class="signal-number">04</span>
+            <span class="signal-icon signal-blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Unusual links</h3>
+            <p>Link shorteners, strange web addresses, and other URL clues.</p>
+          </article>
+        </div>
+      </section>
+
+      <aside class="disclaimer" aria-label="Important limitations">
+        <span class="disclaimer-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.5 18 17H2l8-14.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 7v4m0 2.5v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+        <p><strong>A helpful heads-up, not a guarantee.</strong> ScamShield uses on-device text patterns and optional English speech recognition for educational purposes. It is not a security scanner, cannot verify whether a message, call, or website is genuine, and may miss scams or flag legitimate content. When in doubt, contact the organization through a channel you find independently.</p>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="#" aria-label="ScamShield home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 27 8v7.3c0 7.1-4.8 11.3-11 13.2-6.2-1.9-11-6.1-11-13.2V8l11-4.5Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m11.1 15.7 3.2 3.2 6.8-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span>scam<span class="brand-light">shield</span></span>
+      </a>
+      <span class="footer-copy">Made to help you think twice. <span aria-hidden="true">·</span> Your input never leaves this device.</span>
+    </footer>
+  </body>
+</html>
