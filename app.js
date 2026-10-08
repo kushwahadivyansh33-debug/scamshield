@@ -1,912 +1,508 @@
 "use strict";
 
-const form = document.querySelector("#analyzer-form");
-const messageInput = document.querySelector("#message-input");
-const formError = document.querySelector("#form-error");
-const characterCount = document.querySelector("#character-count");
-const resultPanel = document.querySelector("#result-panel");
-const exampleButton = document.querySelector("#example-button");
-const checkAnotherButton = document.querySelector("#check-another");
-const themeToggle = document.querySelector("#theme-toggle");
-const themeLabel = document.querySelector("#theme-label");
-const screenshotInput = document.querySelector("#screenshot-input");
-const screenshotDropzone = document.querySelector("#screenshot-dropzone");
-const screenshotPreview = document.querySelector("#screenshot-preview");
-const screenshotImage = document.querySelector("#screenshot-image");
-const screenshotFilename = document.querySelector("#screenshot-filename");
-const screenshotProgress = document.querySelector("#screenshot-progress");
-const screenshotProgressBar = document.querySelector("#screenshot-progress-bar");
-const screenshotStatus = document.querySelector("#screenshot-status");
-const removeScreenshotButton = document.querySelector("#remove-screenshot");
-const voiceInput = document.querySelector("#voice-input");
-const voiceDropzone = document.querySelector("#voice-dropzone");
-const voicePreview = document.querySelector("#voice-preview");
-const voiceAudioPreview = document.querySelector("#voice-audio-preview");
-const voiceFilename = document.querySelector("#voice-filename");
-const voiceProgress = document.querySelector("#voice-progress");
-const voiceProgressBar = document.querySelector("#voice-progress-bar");
-const voiceStatus = document.querySelector("#voice-status");
-const removeVoiceButton = document.querySelector("#remove-voice");
-const maximumScreenshotSize = 10 * 1024 * 1024;
-const maximumExtractedTextLength = 10000;
-const supportedImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);
-const maximumVoiceSize = 25 * 1024 * 1024;
-const maximumVoiceDuration = 5 * 60;
-const voiceSampleRate = 16000;
-const supportedAudioTypes = new Set([
-  "audio/aac", "audio/aiff", "audio/flac", "audio/mp3", "audio/mp4", "audio/m4a",
-  "audio/mpeg", "audio/ogg", "audio/opus", "audio/wav", "audio/wave",
-  "audio/webm", "audio/x-aac", "audio/x-aiff", "audio/x-flac", "audio/x-m4a",
-  "audio/x-wav", "audio/vnd.wave",
-]);
-let screenshotObjectUrl = null;
-let screenshotRequest = 0;
-let tesseractLoadPromise = null;
-let voiceObjectUrl = null;
-let voiceRequest = 0;
-let voiceTranscriberPromise = null;
-let audioContextConstructor = null;
-
-function getSavedTheme() {
-  try {
-    return localStorage.getItem("scamshield-theme");
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "SecurityError") return null;
-    throw error;
-  }
-}
-
-function saveTheme(theme) {
-  try {
-    localStorage.setItem("scamshield-theme", theme);
-  } catch (error) {
-    if (!(error instanceof DOMException && error.name === "SecurityError")) throw error;
-  }
-}
-
-function setTheme(theme, persist = false) {
-  const isDark = theme === "dark";
-  document.documentElement.dataset.theme = isDark ? "dark" : "light";
-  themeLabel.textContent = isDark ? "Light" : "Dark";
-  themeToggle.setAttribute("aria-label", `Switch to ${isDark ? "light" : "dark"} mode`);
-  themeToggle.setAttribute("aria-pressed", String(isDark));
-  document.querySelector('meta[name="theme-color"]').content = isDark ? "#171c19" : "#f7f8f4";
-  if (persist) saveTheme(isDark ? "dark" : "light");
-}
-
-const savedTheme = getSavedTheme();
-setTheme(
-  savedTheme === "dark" || savedTheme === "light"
-    ? savedTheme
-    : window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light",
-);
-
-themeToggle.addEventListener("click", () => {
-  setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
-});
-
-function setScreenshotStatus(message, state = "") {
-  screenshotStatus.textContent = message;
-  if (state) screenshotStatus.dataset.state = state;
-  else delete screenshotStatus.dataset.state;
-}
-
-function clearScreenshot() {
-  screenshotRequest += 1;
-  if (screenshotObjectUrl) URL.revokeObjectURL(screenshotObjectUrl);
-  screenshotObjectUrl = null;
-  screenshotInput.value = "";
-  screenshotImage.removeAttribute("src");
-  screenshotFilename.textContent = "";
-  screenshotProgress.textContent = "Ready to extract text";
-  screenshotProgressBar.hidden = true;
-  screenshotProgressBar.value = 0;
-  screenshotPreview.hidden = true;
-  screenshotDropzone.hidden = false;
-  setScreenshotStatus("");
-}
-
-function loadTesseract() {
-  if (window.Tesseract) return Promise.resolve(window.Tesseract);
-  if (tesseractLoadPromise) return tesseractLoadPromise;
-
-  tesseractLoadPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.onload = () => {
-      if (window.Tesseract) resolve(window.Tesseract);
-      else reject(new Error("The OCR engine loaded but could not be started."));
-    };
-    script.onerror = () => reject(new Error("The OCR engine could not be downloaded. Check your connection and try again."));
-    document.head.append(script);
-  }).catch((error) => {
-    tesseractLoadPromise = null;
-    throw error;
-  });
-  return tesseractLoadPromise;
-}
-
-async function analyzeScreenshot(file) {
-  const request = ++screenshotRequest;
-  resultPanel.hidden = true;
-  if (screenshotObjectUrl) URL.revokeObjectURL(screenshotObjectUrl);
-  screenshotObjectUrl = null;
-  screenshotImage.removeAttribute("src");
-  screenshotPreview.hidden = true;
-  screenshotDropzone.hidden = false;
-  screenshotProgressBar.hidden = true;
-  screenshotProgressBar.value = 0;
-  setScreenshotStatus("");
-
-  if (!supportedImageTypes.has(file.type)) {
-    setScreenshotStatus("Please choose a PNG, JPG, WEBP, GIF, or BMP screenshot.", "error");
-    screenshotInput.value = "";
-    return;
-  }
-  if (file.size > maximumScreenshotSize) {
-    setScreenshotStatus("This image is larger than 10 MB. Choose a smaller screenshot.", "error");
-    screenshotInput.value = "";
-    return;
-  }
-  if (file.size === 0) {
-    setScreenshotStatus("This image file is empty. Choose another screenshot.", "error");
-    screenshotInput.value = "";
-    return;
-  }
-
-  if (screenshotObjectUrl) URL.revokeObjectURL(screenshotObjectUrl);
-  screenshotObjectUrl = URL.createObjectURL(file);
-  screenshotImage.src = screenshotObjectUrl;
-  screenshotFilename.textContent = file.name || "Screenshot";
-  screenshotDropzone.hidden = true;
-  screenshotPreview.hidden = false;
-  screenshotProgressBar.value = 0;
-  screenshotProgressBar.hidden = false;
-  screenshotProgress.textContent = "Loading the on-device OCR engine…";
-  setScreenshotStatus("Preparing private, on-device text extraction. The OCR engine is downloaded only when you first use screenshot scanning.", "working");
-
-  let worker = null;
-  try {
-    const tesseract = await loadTesseract();
-    if (request !== screenshotRequest) return;
-    worker = await tesseract.createWorker("eng", 1, {
-      logger: (progress) => {
-        if (request !== screenshotRequest) return;
-        if (progress.status) screenshotProgress.textContent = progress.status;
-        if (typeof progress.progress === "number") screenshotProgressBar.value = progress.progress;
-      },
-      workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
-      langPath: "https://tessdata.projectnaptha.com/4.0.0",
-    });
-    if (request !== screenshotRequest) return;
-    screenshotProgress.textContent = "Reading screenshot…";
-    const { data } = await worker.recognize(file);
-    if (request !== screenshotRequest) return;
-
-    const extractedText = data.text.trim();
-    if (!extractedText) {
-      screenshotProgressBar.hidden = true;
-      screenshotProgress.textContent = "No text found";
-      setScreenshotStatus("We couldn’t read text in this image. Try a clearer screenshot with larger, sharper text.", "error");
-      return;
-    }
-
-    messageInput.value = extractedText.slice(0, maximumExtractedTextLength);
-    messageInput.dispatchEvent(new Event("input", { bubbles: true }));
-    screenshotProgressBar.value = 1;
-    screenshotProgress.textContent = "Text extracted";
-    const wasTruncated = extractedText.length > maximumExtractedTextLength;
-    const notes = [];
-    if (typeof data.confidence === "number" && data.confidence < 50) {
-      notes.push(`OCR confidence is low (${Math.round(data.confidence)}%). Review the extracted text carefully.`);
-    }
-    if (wasTruncated) {
-      notes.push("The first 10,000 characters were analyzed; some extracted text exceeded the analysis limit.");
-    }
-    setScreenshotStatus(
-      notes.length
-        ? notes.join(" ")
-        : "Text extracted locally. Review it in the message box below; scam indicators are being checked.",
-      notes.length ? "working" : "",
-    );
-    renderResult(messageInput.value);
-  } catch (error) {
-    if (request !== screenshotRequest) return;
-    screenshotProgressBar.hidden = true;
-    screenshotProgress.textContent = "Text extraction failed";
-    setScreenshotStatus(
-      error instanceof Error ? error.message : "The screenshot could not be processed. Choose another image and try again.",
-      "error",
-    );
-  } finally {
-    if (worker) await worker.terminate();
-  }
-}
-
-screenshotInput.addEventListener("change", () => {
-  const [file] = screenshotInput.files;
-  if (file) void analyzeScreenshot(file);
-});
-
-screenshotDropzone.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    screenshotInput.click();
-  }
-});
-
-for (const eventName of ["dragenter", "dragover"]) {
-  screenshotDropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    screenshotDropzone.classList.add("is-dragging");
-  });
-}
-
-for (const eventName of ["dragleave", "drop"]) {
-  screenshotDropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    screenshotDropzone.classList.remove("is-dragging");
-  });
-}
-
-screenshotDropzone.addEventListener("drop", (event) => {
-  const [file] = event.dataTransfer.files;
-  if (file) void analyzeScreenshot(file);
-});
-
-removeScreenshotButton.addEventListener("click", clearScreenshot);
-
-function setVoiceStatus(message, state = "") {
-  voiceStatus.textContent = message;
-  if (state) voiceStatus.dataset.state = state;
-  else delete voiceStatus.dataset.state;
-}
-
-function clearVoiceRecording() {
-  voiceRequest += 1;
-  if (voiceObjectUrl) URL.revokeObjectURL(voiceObjectUrl);
-  voiceObjectUrl = null;
-  voiceInput.value = "";
-  voiceAudioPreview.removeAttribute("src");
-  voiceAudioPreview.load();
-  voiceFilename.textContent = "";
-  voiceProgress.textContent = "Ready to transcribe";
-  voiceProgressBar.hidden = true;
-  voiceProgressBar.value = 0;
-  voicePreview.hidden = true;
-  voiceDropzone.hidden = false;
-  setVoiceStatus("");
-}
-
-function isSupportedAudio(file) {
-  if (supportedAudioTypes.has(file.type)) return true;
-  return /\.(?:aac|aif|aiff|flac|m4a|mp3|oga|ogg|opus|wav|webm)$/i.test(file.name);
-}
-
-function resampleAudio(audioBuffer, targetRate) {
-  const sourceRate = audioBuffer.sampleRate;
-  const targetLength = Math.ceil(audioBuffer.duration * targetRate);
-  const channelData = Array.from({ length: audioBuffer.numberOfChannels }, (_, index) => audioBuffer.getChannelData(index));
-  const output = new Float32Array(targetLength);
-
-  for (let index = 0; index < targetLength; index += 1) {
-    const sourcePosition = index * sourceRate / targetRate;
-    const before = Math.floor(sourcePosition);
-    const fraction = sourcePosition - before;
-    let value = 0;
-    for (const channel of channelData) {
-      const firstSample = channel[Math.min(before, channel.length - 1)];
-      const secondSample = channel[Math.min(before + 1, channel.length - 1)];
-      value += firstSample + (secondSample - firstSample) * fraction;
-    }
-    output[index] = value / channelData.length;
-  }
-
-  return output;
-}
-
-function readVoiceDuration(audio) {
-  return new Promise((resolve, reject) => {
-    let timeoutId;
-    const cleanUp = () => {
-      window.clearTimeout(timeoutId);
-      audio.removeEventListener("loadedmetadata", onLoaded);
-      audio.removeEventListener("error", onError);
-    };
-    const onLoaded = () => {
-      cleanUp();
-      resolve(audio.duration);
-    };
-    const onError = () => {
-      cleanUp();
-      reject(new Error("This audio format could not be previewed. Try a WAV or MP3 recording."));
-    };
-
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("error", onError);
-    timeoutId = window.setTimeout(() => {
-      cleanUp();
-      reject(new Error("The recording duration could not be verified. Try a standard WAV, MP3, or M4A file."));
-    }, 10000);
-    audio.load();
-    if (audio.readyState >= 1) onLoaded();
-  });
-}
-
-async function loadVoiceTranscriber() {
-  if (voiceTranscriberPromise) return voiceTranscriberPromise;
-
-  voiceTranscriberPromise = (async () => {
-    setVoiceStatus("Downloading the speech-recognition engine and English model. This can take a few minutes the first time.", "working");
-    const { env, pipeline } = await import("https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js");
-    env.allowLocalModels = false;
-    env.allowRemoteModels = true;
-    env.backends.onnx.wasm.numThreads = 1;
-    return pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en", {
-      revision: "79fb389fc764e7c395bd330e9531d9d32ada7049",
-      quantized: true,
-      progress_callback: (progress) => {
-        if (!progress.status || voicePreview.hidden) return;
-        const progressRatio = typeof progress.progress === "number"
-          ? progress.progress > 1 ? progress.progress / 100 : progress.progress
-          : null;
-        const percent = progressRatio === null ? "" : ` (${Math.round(progressRatio * 100)}%)`;
-        voiceProgress.textContent = `${progress.status}${percent}`;
-        if (progressRatio !== null) voiceProgressBar.value = progressRatio;
-      },
-    });
-  })().catch((error) => {
-    voiceTranscriberPromise = null;
-    throw error;
-  });
-
-  return voiceTranscriberPromise;
-}
-
-async function analyzeVoiceRecording(file) {
-  const request = ++voiceRequest;
-  resultPanel.hidden = true;
-  if (voiceObjectUrl) URL.revokeObjectURL(voiceObjectUrl);
-  voiceObjectUrl = null;
-  voiceAudioPreview.removeAttribute("src");
-  voicePreview.hidden = true;
-  voiceDropzone.hidden = false;
-  voiceProgressBar.hidden = true;
-  voiceProgressBar.value = 0;
-  setVoiceStatus("");
-
-  if (!isSupportedAudio(file)) {
-    setVoiceStatus("Please choose an audio recording, such as MP3, WAV, M4A, OGG, WEBM, or FLAC.", "error");
-    voiceInput.value = "";
-    return;
-  }
-  if (file.size > maximumVoiceSize) {
-    setVoiceStatus("This recording is larger than 25 MB. Choose a smaller audio file.", "error");
-    voiceInput.value = "";
-    return;
-  }
-  if (file.size === 0) {
-    setVoiceStatus("This audio file is empty. Choose another recording.", "error");
-    voiceInput.value = "";
-    return;
-  }
-
-  voiceObjectUrl = URL.createObjectURL(file);
-  voiceAudioPreview.src = voiceObjectUrl;
-  voiceAudioPreview.load();
-  voiceFilename.textContent = file.name || "Voice recording";
-  voiceDropzone.hidden = true;
-  voicePreview.hidden = false;
-  voiceProgressBar.hidden = false;
-  voiceProgress.textContent = "Reading audio…";
-  setVoiceStatus("Your audio is being prepared locally. It is never sent to a transcription service.", "working");
-
-  let audioContext = null;
-  try {
-    const declaredDuration = await readVoiceDuration(voiceAudioPreview);
-    if (request !== voiceRequest) return;
-    if (!Number.isFinite(declaredDuration) || declaredDuration <= 0) {
-      throw new Error("The recording duration could not be verified. Try a standard WAV, MP3, or M4A file.");
-    }
-    if (declaredDuration > maximumVoiceDuration) {
-      voiceProgressBar.hidden = true;
-      voiceProgress.textContent = "Recording is too long";
-      setVoiceStatus("This recording is longer than 5 minutes. Choose a shorter clip to analyze.", "error");
-      return;
-    }
-
-    audioContextConstructor ??= window.AudioContext || window.webkitAudioContext;
-    if (!audioContextConstructor) {
-      throw new Error("Audio decoding is not available in this browser. Try a recent version of Chrome or Edge.");
-    }
-    audioContext = new audioContextConstructor();
-    const audioBuffer = await audioContext.decodeAudioData(await file.arrayBuffer());
-    if (request !== voiceRequest) return;
-    if (audioBuffer.duration > maximumVoiceDuration) {
-      voiceProgressBar.hidden = true;
-      voiceProgress.textContent = "Recording is too long";
-      setVoiceStatus("This recording is longer than 5 minutes. Choose a shorter clip to analyze.", "error");
-      return;
-    }
-    if (!audioBuffer.numberOfChannels || !audioBuffer.length) {
-      throw new Error("No audio could be read from this file. Try a different recording.");
-    }
-
-    voiceProgress.textContent = "Preparing 16 kHz audio…";
-    const samples = resampleAudio(audioBuffer, voiceSampleRate);
-    if (request !== voiceRequest) return;
-
-    const transcriber = await loadVoiceTranscriber();
-    if (request !== voiceRequest) return;
-    setVoiceStatus("Transcribing locally. Longer recordings may take a few minutes.", "working");
-    voiceProgress.textContent = "Transcribing in your browser…";
-    const transcription = await transcriber(samples, {
-      sampling_rate: voiceSampleRate,
-      chunk_length_s: 30,
-      stride_length_s: 5,
-      return_timestamps: true,
-    });
-    if (request !== voiceRequest) return;
-
-    const transcript = typeof transcription.text === "string" ? transcription.text.trim() : "";
-    if (!transcript) {
-      voiceProgressBar.hidden = true;
-      voiceProgress.textContent = "No speech detected";
-      setVoiceStatus("We couldn’t identify any spoken English. Try a clearer recording with audible speech.", "error");
-      return;
-    }
-
-    const wasTruncated = transcript.length > maximumExtractedTextLength;
-    messageInput.value = transcript.slice(0, maximumExtractedTextLength);
-    messageInput.dispatchEvent(new Event("input", { bubbles: true }));
-    voiceProgressBar.value = 1;
-    voiceProgress.textContent = `Transcription complete · ${Math.round(audioBuffer.duration)} sec`;
-    setVoiceStatus(
-      wasTruncated
-        ? "Transcript ready. The first 10,000 characters were analyzed; review or edit them below."
-        : "Transcript ready. Review or edit the text below; scam indicators have been analyzed.",
-      wasTruncated ? "working" : "",
-    );
-    renderResult(messageInput.value);
-  } catch (error) {
-    if (request !== voiceRequest) return;
-    voiceProgressBar.hidden = true;
-    voiceProgress.textContent = "Transcription failed";
-    const message = error instanceof Error ? error.message : "";
-    setVoiceStatus(
-      message.includes("import") || message.includes("fetch") || message.includes("network")
-        ? "The speech engine or model could not be downloaded. Check your internet connection and try again."
-        : message || "This recording could not be transcribed in this browser. Try another audio format or Chrome/Edge.",
-      "error",
-    );
-  } finally {
-    if (audioContext && audioContext.state !== "closed") await audioContext.close();
-  }
-}
-
-voiceInput.addEventListener("change", () => {
-  const [file] = voiceInput.files;
-  if (file) void analyzeVoiceRecording(file);
-});
-
-voiceDropzone.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    voiceInput.click();
-  }
-});
-
-for (const eventName of ["dragenter", "dragover"]) {
-  voiceDropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    voiceDropzone.classList.add("is-dragging");
-  });
-}
-
-for (const eventName of ["dragleave", "drop"]) {
-  voiceDropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    voiceDropzone.classList.remove("is-dragging");
-  });
-}
-
-voiceDropzone.addEventListener("drop", (event) => {
-  const [file] = event.dataTransfer.files;
-  if (file) void analyzeVoiceRecording(file);
-});
-
-removeVoiceButton.addEventListener("click", clearVoiceRecording);
-
-const checks = [
-  {
-    label: "Suspicious wording",
-    patterns: [
-      /\b(?:verify|suspend(?:ed)?|locked|compromised|unusual activity|unauthorized|unrecognised|unrecognized)\b/i,
-      /\b(?:claim(?: your)?|click here|open the attachment|confirm your account)\b/i,
-    ],
+const cropData = {
+  tomato: {
+    name: "tomatoes",
+    icon: "🍅",
+    price: "₹ 1,840",
+    change: "8.2%",
+    arrivals: "12 farmers",
+    arrivalLevel: "Low",
+    recommendation: "tomorrow morning",
+    copy: "Prices are trending up, and fewer nearby farms plan to bring tomatoes tomorrow. Picking early keeps quality high in the cooler hours.",
+    insight: "Prices may rise 5–8% by Thursday.",
+    values: [124, 132, 91, 102, 118, 88, 104, 71, 85, 56, 76, 43, 29],
   },
-  {
-    label: "Urgent or pressuring language",
-    patterns: [
-      /\b(?:act now|immediately|urgent(?:ly)?|final notice|expires? today|within \d+ hours?|right away|last chance|don't delay|do not delay)\b/i,
-    ],
+  onion: {
+    name: "onions",
+    icon: "🧅",
+    price: "₹ 2,160",
+    change: "3.6%",
+    arrivals: "18 farmers",
+    arrivalLevel: "Medium",
+    recommendation: "Thursday morning",
+    copy: "Onion prices are holding steady, with a small lift expected later this week. Keep harvested bulbs dry and well-ventilated while you wait for a good rate.",
+    insight: "Prices look steady, with a small lift expected.",
+    values: [106, 100, 116, 95, 106, 93, 100, 82, 87, 69, 82, 59, 53],
   },
-  {
-    label: "Threats of arrest, legal action, or punishment",
-    patterns: [
-      /\b(?:arrest(?:ed)?|jail|prison|prosecut(?:e|ion)|legal action|lawsuit|deport(?:ed|ation)|court action|police at your door|service disconnected|account will be closed|face a fine)\b/i,
-    ],
+  grapes: {
+    name: "grapes",
+    icon: "🍇",
+    price: "₹ 3,420",
+    change: "5.1%",
+    arrivals: "9 farmers",
+    arrivalLevel: "Low",
+    recommendation: "tomorrow at first light",
+    copy: "Grape demand is firm and nearby arrivals are light. Pick only dry bunches in the cool morning, then move them gently to avoid bruising.",
+    insight: "Demand is firm and nearby arrivals remain light.",
+    values: [136, 120, 127, 109, 120, 90, 99, 80, 91, 63, 66, 48, 36],
   },
-  {
-    label: "Request to send money or pay a fee",
-    patterns: [
-      /\b(?:pay|send|transfer|wire|deposit|purchase|buy)\b.{0,45}\b(?:money|funds|cash|payment|fee|fine|tax|gift card|bitcoin|crypto(?:currency)?|dollars?|euros?|pounds?)\b|\b(?:money|funds|cash|payment|fee|fine|tax|gift card|bitcoin|crypto(?:currency)?|dollars?|euros?|pounds?)\b.{0,45}\b(?:pay|send|transfer|wire|deposit|purchase|buy)\b/i,
-    ],
-  },
-  {
-    label: "Prize, reward, or easy-money offer",
-    patterns: [
-      /\b(?:you(?:'|’)ve|you have) won\b/i,
-      /\b(?:winner|prize|reward|giveaway|gift card|cash bonus|free money|lottery|claim your (?:gift|bonus|reward))\b/i,
-    ],
-  },
-  {
-    label: "Request for personal or financial information",
-    patterns: [
-      /\b(?:password|passcode|one[- ]time code|verification code|social security|ssn|bank account|credit card|debit card|card number|routing number|pin number|cvv|wire transfer|crypto(?:currency)? wallet)\b/i,
-      /\b(?:send|provide|share|enter|confirm|update)\b.{0,45}\b(?:password|passcode|code|personal (?:details|information)|bank|card|payment|account details)\b/i,
-    ],
-  },
-];
-
-const scamTypes = [
-  {
-    id: "phishing",
-    label: "Phishing",
-    clues: [
-      { weight: 35, pattern: /\b(?:password|passcode|one[- ]time code|verification code|social security|ssn|bank account|credit card|debit card|card number|routing number|pin number|cvv)\b/i },
-      { weight: 25, pattern: /\b(?:verify|confirm|update|restore|unlock|secure)\b.{0,45}\b(?:account|identity|password|details|payment)\b|\b(?:account|identity|password|details|payment)\b.{0,45}\b(?:verify|confirm|update|restore|unlock|secure)\b/i },
-      { weight: 15, test: ({ urlReasons }) => urlReasons.size > 0 },
-      { weight: 5, test: ({ reasons }) => reasons.includes("Urgent or pressuring language") },
-    ],
-  },
-  {
-    id: "fake-prize",
-    label: "Fake Prize",
-    clues: [
-      { weight: 60, pattern: /\b(?:you(?:'|’)ve|you have) won\b|\b(?:winner|prize|reward|giveaway|gift card|cash bonus|free money|lottery|claim your (?:gift|bonus|reward))\b/i },
-      { weight: 25, pattern: /\b(?:fee|tax|shipping|processing charge)\b.{0,40}\b(?:claim|prize|reward|winnings|gift)\b|\b(?:claim|prize|reward|winnings|gift)\b.{0,40}\b(?:fee|tax|shipping|processing charge)\b/i },
-    ],
-  },
-  {
-    id: "impersonation",
-    label: "Impersonation",
-    clues: [
-      { weight: 30, pattern: /\b(?:from|on behalf of|we are|your)\b.{0,35}\b(?:bank|credit union|government|irs|hmrc|police|court|tax office|support team|security team|paypal|amazon|microsoft|apple|netflix)\b/i },
-      { weight: 25, pattern: /\b(?:bank|government|irs|hmrc|police|court|tax office|support team|security team|paypal|amazon|microsoft|apple|netflix)\b.{0,45}\b(?:verify|suspend|refund|payment|password|account|urgent|locked)\b/i },
-    ],
-  },
-  {
-    id: "investment",
-    label: "Investment Scam",
-    clues: [
-      { weight: 20, pattern: /\b(?:invest(?:ment)?|crypto(?:currency)?|bitcoin|forex|trading platform|stock tips?)\b/i },
-      { weight: 40, pattern: /\b(?:guaranteed|risk[- ]free|no risk|fixed)\b.{0,35}\b(?:returns?|profits?|income|gains?)\b|\b(?:returns?|profits?|income|gains?)\b.{0,35}\b(?:guaranteed|risk[- ]free|no risk|fixed)\b/i },
-      { weight: 30, pattern: /\b(?:double your money|high[- ]yield|passive income|limited investment opportunity|exclusive investment)\b/i },
-    ],
-  },
-];
-
-const suspiciousTlds = new Set(["zip", "mov", "top", "xyz", "click", "work", "country", "gq", "tk", "ml", "cf"]);
-const urlRegex = /\b(?:https?:\/\/|www\.)[^\s<>"'`]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:\/[^\s<>"'`]*)?/gi;
-
-const iconMarkup = {
-  low: '<svg viewBox="0 0 20 20" fill="none"><path d="m5 10.2 3.2 3.2L15.5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  suspicious: '<svg viewBox="0 0 20 20" fill="none"><path d="M10 3v7m0 3.5v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 1.8 18.2 17H1.8L10 1.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
-  high: '<svg viewBox="0 0 20 20" fill="none"><path d="M10 5v5m0 3.3v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="10" r="8.2" stroke="currentColor" stroke-width="1.5"/></svg>',
 };
 
-function cleanUrlCandidate(candidate) {
-  return candidate.replace(/[.,!?;:)]+$/g, "");
+const marketAdjustments = {
+  lasalgaon: { label: "Lasalgaon APMC", delta: 0, change: 0 },
+  pimpalgaon: { label: "Pimpalgaon Baswant", delta: 120, change: -1.1 },
+  nashik: { label: "Nashik Market", delta: -85, change: 0.7 },
+};
+
+const planStorageKey = "harvestwindow-plans";
+const cropSelect = document.querySelector("#crop-select");
+const marketSelect = document.querySelector("#market-select");
+const plannerMarket = document.querySelector("#planner-market");
+const harvestDateInput = document.querySelector("#harvest-date");
+const harvestQuantityInput = document.querySelector("#harvest-quantity");
+const grossEstimate = document.querySelector("#gross-estimate");
+const plannerStatus = document.querySelector("#planner-status");
+const savedPlansList = document.querySelector("#saved-plans-list");
+const logCount = document.querySelector("#log-count");
+const logNote = document.querySelector("#log-note");
+const priceValue = document.querySelector("#price-value");
+const priceChange = document.querySelector("#price-change");
+const arrivalValue = document.querySelector("#arrival-value");
+const arrivalCaption = document.querySelector("#arrival-caption");
+const cropIcon = document.querySelector(".crop-icon");
+const recommendationDay = document.querySelector("#recommendation-day");
+const recommendationCopy = document.querySelector("#recommendation-copy");
+const chartLine = document.querySelector("#chart-line");
+const chartArea = document.querySelector("#chart-area");
+const chartForecast = document.querySelector("#chart-forecast");
+const chartCallout = document.querySelector(".chart-callout");
+const chartInsight = document.querySelector(".chart-insight strong");
+const checklist = document.querySelector("#checklist");
+const checkProgressLabel = document.querySelector("#check-progress-label");
+const checkProgressBar = document.querySelector("#check-progress-bar");
+const toast = document.querySelector("#toast");
+const shareDialog = document.querySelector("#share-dialog");
+const shareMessage = document.querySelector("#share-message");
+const shareStatus = document.querySelector("#share-status");
+const checkoutDialog = document.querySelector("#checkout-dialog");
+const checkoutPlanName = document.querySelector("#checkout-plan-name");
+const checkoutPlanPrice = document.querySelector("#checkout-plan-price");
+const checkoutBillingNote = document.querySelector("#checkout-billing-note");
+const billingMonthlyButton = document.querySelector("#billing-monthly");
+const billingYearlyButton = document.querySelector("#billing-yearly");
+const planNames = { free: "Free", smart: "Smart Farmer", fpo: "FPO Pro" };
+let toastTimeout;
+let weekExpanded = false;
+let savedPlans = [];
+let billingPeriod = "monthly";
+let pendingPlan = null;
+let selectedPlan = "free";
+
+function formatDate(date, options) {
+  return new Intl.DateTimeFormat("en-IN", options).format(date);
 }
 
-function parseUrl(candidate) {
-  const raw = cleanUrlCandidate(candidate);
+function updateDates() {
+  const today = new Date();
+  document.querySelector("#today-date").textContent = formatDate(today, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).toUpperCase();
+
+  const chartDates = document.querySelectorAll(".x-labels span");
+  chartDates.forEach((label, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + index - 2);
+    label.textContent = index === 2 ? "Today" : formatDate(date, { month: "short", day: "2-digit" });
+  });
+
+  document.querySelectorAll(".window-date").forEach((dateElement, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + index + 1);
+    dateElement.querySelector("strong").textContent = formatDate(date, { day: "2-digit" });
+    dateElement.querySelector("span").textContent = formatDate(date, { weekday: "short" }).toUpperCase();
+  });
+}
+
+function parseRupees(value) {
+  return Number(value.replace(/[^\d]/g, ""));
+}
+
+function formatRupees(value) {
+  return `₹ ${new Intl.NumberFormat("en-IN").format(value)}`;
+}
+
+function getLocalDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getPlannerPrice() {
+  return parseRupees(cropData[cropSelect.value].price) + marketAdjustments[plannerMarket.value].delta;
+}
+
+function updateGrossEstimate() {
+  const quantity = Number(harvestQuantityInput.value);
+  const price = getPlannerPrice();
+  grossEstimate.textContent = Number.isFinite(quantity) && quantity > 0
+    ? formatRupees(price * quantity)
+    : "—";
+}
+
+function setPlannerStatus(message, state = "") {
+  plannerStatus.textContent = message;
+  if (state) plannerStatus.dataset.state = state;
+  else delete plannerStatus.dataset.state;
+}
+
+function setLogNote(message) {
+  logNote.textContent = message;
+}
+
+function isValidPlan(plan) {
+  const parsedDate = plan && typeof plan.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(plan.date)
+    ? new Date(`${plan.date}T00:00:00`)
+    : null;
+  return plan
+    && typeof plan === "object"
+    && typeof plan.id === "string"
+    && parsedDate instanceof Date
+    && !Number.isNaN(parsedDate.getTime())
+    && getLocalDateString(parsedDate) === plan.date
+    && Number.isFinite(plan.quantity)
+    && plan.quantity >= 1
+    && plan.quantity <= 2000
+    && Object.hasOwn(cropData, plan.crop)
+    && Object.hasOwn(marketAdjustments, plan.market)
+    && Number.isFinite(plan.price)
+    && Number.isFinite(plan.total)
+    && plan.total === plan.price * plan.quantity;
+}
+
+function loadSavedPlans() {
   try {
-    return new URL(/^[a-z][a-z\d+.-]*:/i.test(raw) ? raw : `https://${raw}`);
-  } catch {
-    return null;
+    const rawPlans = localStorage.getItem(planStorageKey);
+    if (rawPlans === null) return [];
+    const parsedPlans = JSON.parse(rawPlans);
+    if (!Array.isArray(parsedPlans) || !parsedPlans.every(isValidPlan)) {
+      setLogNote("Saved plan data is invalid and was not loaded.");
+      return [];
+    }
+    return parsedPlans.slice(0, 20);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "SecurityError") {
+      setLogNote("Browser storage is unavailable. Plans cannot be loaded or saved in this session.");
+      return [];
+    }
+    if (error instanceof SyntaxError) {
+      setLogNote("Saved plan data could not be read. Clear the browser's HarvestWindow plan data to start a new log.");
+      return [];
+    }
+    throw error;
   }
 }
 
-function inspectUrl(candidate) {
-  const parsed = parseUrl(candidate);
-  if (!parsed) return [];
+function renderSavedPlans() {
+  savedPlansList.replaceChildren();
+  logCount.textContent = `${savedPlans.length} ${savedPlans.length === 1 ? "plan" : "plans"}`;
 
-  const raw = cleanUrlCandidate(candidate);
-  const host = parsed.hostname.toLowerCase();
-  const reasons = [];
-  if (parsed.username || parsed.password || raw.includes("@")) {
-    reasons.push("A link contains an @ sign or embedded sign-in details");
-  }
-  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(host)) {
-    reasons.push("A link uses a raw IP address instead of a familiar domain name");
-  }
-  if (host.startsWith("xn--") || host.split(".").some((part) => part.startsWith("xn--"))) {
-    reasons.push("A link uses an encoded domain name that can disguise lookalike characters");
-  }
-  if (/(?:bit\.ly|tinyurl\.com|t\.co|goo\.gl|ow\.ly|is\.gd|buff\.ly|cutt\.ly)$/i.test(host)) {
-    reasons.push("A link uses a URL shortener, which hides its destination");
-  }
-  const tld = host.split(".").pop();
-  if (suspiciousTlds.has(tld)) {
-    reasons.push(`A link uses the less familiar .${tld} domain ending`);
-  }
-  if (host.split(".").length >= 5) {
-    reasons.push("A link has an unusually long chain of subdomains");
-  }
-  if (parsed.protocol === "http:") {
-    reasons.push("A link does not use an encrypted HTTPS connection");
-  }
-  return reasons;
-}
-
-function analyze(text) {
-  const reasons = [];
-  for (const check of checks) {
-    if (check.patterns.some((pattern) => pattern.test(text))) reasons.push(check.label);
-  }
-
-  const urls = text.match(urlRegex) || [];
-  const urlReasons = new Set(urls.flatMap(inspectUrl));
-  reasons.push(...urlReasons);
-
-  const scamTypeScores = scamTypes.map((type) => ({
-    ...type,
-    score: Math.min(100, type.clues.reduce((score, clue) => {
-      const matches = clue.pattern ? clue.pattern.test(text) : clue.test({ reasons, urlReasons });
-      return score + (matches ? clue.weight : 0);
-    }, 0)),
-  }));
-
-  let risk;
-  if (
-    reasons.length >= 3
-    || (reasons.length >= 2 && reasons.includes("Request for personal or financial information"))
-    || (reasons.includes("Threats of arrest, legal action, or punishment") && reasons.includes("Request to send money or pay a fee"))
-  ) {
-    risk = "high";
-  } else if (reasons.length > 0) {
-    risk = "suspicious";
-  } else {
-    risk = "low";
-  }
-  return { risk, reasons, urlCount: urls.length, scamTypeScores };
-}
-
-function buildWebsiteReports(urls) {
-  return urls.map((candidate) => {
-    const parsed = parseUrl(candidate);
-    if (!parsed) return null;
-    const reasons = inspectUrl(candidate);
-    const risk = reasons.length >= 2 ? "high" : reasons.length === 1 ? "suspicious" : "low";
-    return {
-      domain: parsed.hostname,
-      https: parsed.protocol === "https:",
-      reasons,
-      risk,
-    };
-  }).filter(Boolean);
-}
-
-function appendWebsiteDetail(container, label, value, statusClass = "") {
-  const detail = document.createElement("div");
-  detail.className = "website-detail";
-  const detailLabel = document.createElement("span");
-  detailLabel.className = "website-detail-label";
-  detailLabel.textContent = label;
-  const detailValue = document.createElement("span");
-  detailValue.className = `website-detail-value${statusClass ? ` ${statusClass}` : ""}`;
-  detailValue.textContent = value;
-  detail.append(detailLabel, detailValue);
-  container.append(detail);
-}
-
-function renderWebsiteReports(urls) {
-  const websiteList = document.querySelector("#website-list");
-  websiteList.replaceChildren();
-  const reports = buildWebsiteReports(urls);
-
-  if (!reports.length) {
-    const empty = document.createElement("p");
-    empty.className = "website-empty";
-    empty.textContent = "No website link was detected in this message.";
-    websiteList.append(empty);
+  if (!savedPlans.length) {
+    const emptyMessage = document.createElement("div");
+    emptyMessage.className = "empty-log";
+    const icon = document.createElement("span");
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "▤";
+    const title = document.createElement("strong");
+    title.textContent = "No harvest plans yet";
+    const detail = document.createElement("span");
+    detail.textContent = "Save a plan to start your log.";
+    emptyMessage.append(icon, title, detail);
+    savedPlansList.append(emptyMessage);
     return;
   }
 
-  for (const report of reports) {
-    const card = document.createElement("article");
-    card.className = "website-card";
-    card.dataset.risk = report.risk;
-
-    const heading = document.createElement("div");
-    heading.className = "website-card-heading";
-    const domain = document.createElement("span");
-    domain.className = "website-domain";
-    domain.textContent = report.domain;
-    const risk = document.createElement("span");
-    risk.className = "website-risk";
-    risk.textContent = report.risk === "high" ? "HIGH RISK" : report.risk === "suspicious" ? "SUSPICIOUS" : "LOW RISK";
-    heading.append(domain, risk);
-
-    const details = document.createElement("div");
-    details.className = "website-details";
-    appendWebsiteDetail(details, "HTTPS", report.https ? "Yes" : "No", report.https ? "is-positive" : "is-negative");
-    appendWebsiteDetail(details, "Domain age", "Unknown");
-    appendWebsiteDetail(details, "Reputation", "Not checked");
-    appendWebsiteDetail(details, "Redirects", "Not followed");
-
-    card.append(heading, details);
-    if (report.reasons.length) {
-      const explanation = document.createElement("p");
-      explanation.className = "website-card-reasons";
-      explanation.textContent = `URL warning signs: ${report.reasons.join("; ")}.`;
-      card.append(explanation);
-    }
-    websiteList.append(card);
-  }
+  savedPlans.forEach((plan) => {
+    const item = document.createElement("article");
+    item.className = "saved-plan-entry";
+    const title = document.createElement("strong");
+    title.textContent = `${cropData[plan.crop].name[0].toUpperCase()}${cropData[plan.crop].name.slice(1)} · ${formatDate(new Date(`${plan.date}T00:00:00`), {
+      day: "numeric",
+      month: "short",
+    })}`;
+    const details = document.createElement("span");
+    details.textContent = `${plan.quantity} quintals · ${marketAdjustments[plan.market].label}`;
+    const total = document.createElement("span");
+    total.className = "saved-plan-total";
+    total.textContent = formatRupees(plan.total);
+    item.append(title, details, total);
+    savedPlansList.append(item);
+  });
 }
 
-function animateScamTypeScores(container) {
-  const rows = [...container.querySelectorAll(".scam-type-row")];
-  const duration = 850;
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function update(progress) {
-    for (const row of rows) {
-      const target = Number(row.dataset.score);
-      const displayed = Math.round(target * progress);
-      row.querySelector(".scam-type-fill").style.setProperty("--score-width", `${displayed}%`);
-      row.querySelector(".scam-type-value").textContent = `${displayed}%`;
-    }
-  }
-
-  if (prefersReducedMotion) {
-    update(1);
-    return;
-  }
-
-  const start = performance.now();
-  function step(now) {
-    const progress = Math.min(1, (now - start) / duration);
-    update(1 - (1 - progress) ** 3);
-    if (progress < 1) window.requestAnimationFrame(step);
-  }
-  window.requestAnimationFrame(step);
-}
-
-function buildAdvice(risk) {
-  if (risk === "high") {
-    return "Don’t click links, reply, or share codes, passwords, or payment details. Contact the organization using a phone number or website you find independently.";
-  }
-  if (risk === "suspicious") {
-    return "Pause before responding. Verify the sender and any link independently, and never share passwords or verification codes.";
-  }
-  return "No common warning signs were found, but that doesn’t prove it’s safe. If unexpected, verify with the sender through a trusted channel.";
-}
-
-function renderResult(text) {
-  const { risk, reasons, urlCount, scamTypeScores } = analyze(text);
-  const urls = text.match(urlRegex) || [];
-  const title = risk === "high" ? "High Risk" : risk === "suspicious" ? "Suspicious" : "Low Risk";
-  const summary = reasons.length
-    ? `We found ${reasons.length} ${reasons.length === 1 ? "warning sign" : "warning signs"} in this text${urlCount ? ` and checked ${urlCount} ${urlCount === 1 ? "link" : "links"}` : ""}.`
-    : "We didn’t spot the patterns this tool checks for. This is not a safety guarantee.";
-
-  resultPanel.dataset.risk = risk;
-  document.querySelector("#result-icon").innerHTML = iconMarkup[risk];
-  document.querySelector("#result-kicker").textContent = "ON-DEVICE CHECK COMPLETE";
-  document.querySelector("#result-title").textContent = title;
-  document.querySelector("#risk-score").textContent = `${reasons.length} ${reasons.length === 1 ? "signal" : "signals"}`;
-  document.querySelector("#result-summary").textContent = summary;
-  document.querySelector("#result-advice").textContent = buildAdvice(risk);
-
-  const reasonContainer = document.querySelector("#result-reasons");
-  reasonContainer.replaceChildren();
-  if (reasons.length) {
-    for (const reason of reasons) {
-      const item = document.createElement("div");
-      item.className = "reason-item";
-      const mark = document.createElement("span");
-      mark.className = "reason-mark";
-      mark.setAttribute("aria-hidden", "true");
-      mark.textContent = "!";
-      const label = document.createElement("span");
-      label.textContent = reason;
-      item.append(mark, label);
-      reasonContainer.append(item);
-    }
-  } else {
-    const item = document.createElement("div");
-    item.className = "reason-item";
-    const mark = document.createElement("span");
-    mark.className = "reason-mark";
-    mark.setAttribute("aria-hidden", "true");
-    mark.textContent = "·";
-    const label = document.createElement("span");
-    label.textContent = "No checked patterns were found";
-    item.append(mark, label);
-    reasonContainer.append(item);
-  }
-
-  const scamTypeList = document.querySelector("#scam-type-list");
-  scamTypeList.replaceChildren();
-  for (const type of scamTypeScores) {
-    const row = document.createElement("div");
-    row.className = "scam-type-row";
-    row.dataset.type = type.id;
-    row.dataset.score = String(type.score);
-
-    const label = document.createElement("span");
-    label.className = "scam-type-name";
-    label.textContent = type.label;
-
-    const meter = document.createElement("div");
-    meter.className = "scam-type-track";
-    meter.setAttribute("role", "meter");
-    meter.setAttribute("aria-label", `${type.label} heuristic match score`);
-    meter.setAttribute("aria-valuemin", "0");
-    meter.setAttribute("aria-valuemax", "100");
-    meter.setAttribute("aria-valuenow", String(type.score));
-
-    const fill = document.createElement("div");
-    fill.className = "scam-type-fill";
-    meter.append(fill);
-
-    const value = document.createElement("span");
-    value.className = "scam-type-value";
-    value.textContent = "0%";
-    row.append(label, meter, value);
-    scamTypeList.append(row);
-  }
-  renderWebsiteReports(urls);
-
-  resultPanel.hidden = false;
-  animateScamTypeScores(scamTypeList);
-  resultPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-messageInput.addEventListener("input", () => {
-  characterCount.textContent = `${messageInput.value.length.toLocaleString()} / 10,000`;
-  if (messageInput.value.trim()) formError.hidden = true;
-});
-
-form.addEventListener("submit", (event) => {
+function saveHarvestPlan(event) {
   event.preventDefault();
-  const text = messageInput.value.trim();
-  if (!text) {
-    formError.hidden = false;
-    messageInput.focus();
+  setPlannerStatus("");
+  const quantity = Number(harvestQuantityInput.value);
+  const date = harvestDateInput.value;
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 2000) {
+    setPlannerStatus("Enter a quantity from 1 to 2,000 quintals.", "error");
+    harvestQuantityInput.focus();
     return;
   }
-  formError.hidden = true;
-  renderResult(text);
+  if (!date || date < getLocalDateString(tomorrow)) {
+    setPlannerStatus("Choose a harvest date starting tomorrow.", "error");
+    harvestDateInput.focus();
+    return;
+  }
+
+  const price = getPlannerPrice();
+  const plan = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    date,
+    quantity,
+    crop: cropSelect.value,
+    market: plannerMarket.value,
+    price,
+    total: price * quantity,
+  };
+  const nextPlans = [plan, ...savedPlans].slice(0, 20);
+  try {
+    localStorage.setItem(planStorageKey, JSON.stringify(nextPlans));
+  } catch (error) {
+    if (error instanceof DOMException && (error.name === "SecurityError" || error.name === "QuotaExceededError")) {
+      setPlannerStatus("This browser could not save your plan. Check storage permissions and try again.", "error");
+      return;
+    }
+    throw error;
+  }
+
+  savedPlans = nextPlans;
+  renderSavedPlans();
+  setPlannerStatus("Plan saved on this device.");
+}
+
+function makeShareMessage() {
+  const date = harvestDateInput.value
+    ? formatDate(new Date(`${harvestDateInput.value}T00:00:00`), { weekday: "short", day: "numeric", month: "short" })
+    : "date not set";
+  const quantity = Number(harvestQuantityInput.value);
+  const amount = Number.isInteger(quantity) && quantity > 0 ? `${quantity} quintals` : "quantity not set";
+  return `Harvest plan near Nashik: ${amount} of ${cropData[cropSelect.value].name}, planned for ${date}. Considering ${marketAdjustments[plannerMarket.value].label}. Shared from HarvestWindow; timing and prices are estimates.`;
+}
+
+function setShareStatus(message, state = "") {
+  shareStatus.textContent = message;
+  if (state) shareStatus.dataset.state = state;
+  else delete shareStatus.dataset.state;
+}
+
+function setChartLine(values) {
+  const points = values.map((value, index) => ({
+    x: (620 / (values.length - 1)) * index,
+    y: value,
+  }));
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" ");
+  const currentPoint = points[2];
+  const lastPoint = points[points.length - 1];
+  chartLine.setAttribute("d", path);
+  chartArea.setAttribute("d", `${path} L620 164 L0 164 Z`);
+  chartForecast.setAttribute("d", `M${currentPoint.x} ${currentPoint.y} L${lastPoint.x} ${lastPoint.y}`);
+  const marker = document.querySelector(".chart-point");
+  const halo = document.querySelector(".chart-point-halo");
+  marker.setAttribute("cx", String(currentPoint.x));
+  marker.setAttribute("cy", String(currentPoint.y));
+  halo.setAttribute("cx", String(currentPoint.x));
+  halo.setAttribute("cy", String(currentPoint.y));
+  chartCallout.setAttribute("x", String(currentPoint.x + 12));
+  chartCallout.setAttribute("y", String(currentPoint.y - 17));
+}
+
+function updateDashboard() {
+  const crop = cropData[cropSelect.value];
+  const market = marketAdjustments[marketSelect.value];
+  const price = parseRupees(crop.price) + market.delta;
+  const change = (Number.parseFloat(crop.change) + market.change).toFixed(1);
+
+  cropIcon.textContent = crop.icon;
+  priceValue.textContent = formatRupees(price);
+  priceChange.textContent = `${change}%`;
+  priceChange.parentElement.classList.toggle("trend-down", Number(change) < 0);
+  priceChange.parentElement.classList.toggle("trend-up", Number(change) >= 0);
+  arrivalValue.textContent = crop.arrivalLevel;
+  arrivalCaption.textContent = `About ${crop.arrivals} planning to sell`;
+  recommendationDay.textContent = crop.recommendation;
+  recommendationCopy.textContent = crop.copy;
+  chartCallout.textContent = `TODAY · ${formatRupees(price)}`;
+  chartInsight.textContent = crop.insight;
+  updateGrossEstimate();
+  setChartLine(crop.values.filter((value, index) => index % 2 === 0));
+}
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add("visible");
+  window.clearTimeout(toastTimeout);
+  toastTimeout = window.setTimeout(() => toast.classList.remove("visible"), 2800);
+}
+
+function updateChecklist() {
+  const items = [...checklist.querySelectorAll('input[type="checkbox"]')];
+  const done = items.filter((item) => item.checked).length;
+  checkProgressLabel.textContent = `${done} of ${items.length} done`;
+  checkProgressBar.style.width = `${(done / items.length) * 100}%`;
+}
+
+function setBillingPeriod(period) {
+  billingPeriod = period;
+  const yearly = period === "yearly";
+  billingMonthlyButton.classList.toggle("active", !yearly);
+  billingMonthlyButton.setAttribute("aria-pressed", String(!yearly));
+  billingYearlyButton.classList.toggle("active", yearly);
+  billingYearlyButton.setAttribute("aria-pressed", String(yearly));
+
+  document.querySelectorAll(".plan-price strong").forEach((price) => {
+    price.textContent = price.dataset[period];
+  });
+  document.querySelectorAll(".plan-billing-note").forEach((note) => {
+    note.textContent = note.dataset[`${period}Note`];
+  });
+}
+
+function openPlanSelection(plan) {
+  if (!Object.hasOwn(planNames, plan)) return;
+  pendingPlan = plan;
+  const card = document.querySelector(`[data-plan-card="${plan}"]`);
+  const price = card.querySelector(".plan-price strong");
+  const billing = card.querySelector(".plan-billing-note").textContent;
+  checkoutPlanName.textContent = planNames[plan];
+  checkoutPlanPrice.textContent = price.dataset[`${billingPeriod}Total`]
+    || `${price.textContent} / month`;
+  checkoutBillingNote.textContent = billing;
+  document.querySelector("#checkout-status").textContent = "";
+  document.querySelector("#confirm-plan").disabled = false;
+  checkoutDialog.showModal();
+}
+
+function confirmPlanSelection() {
+  if (!pendingPlan || !Object.hasOwn(planNames, pendingPlan)) return;
+
+  selectedPlan = pendingPlan;
+  document.querySelectorAll("[data-plan-card]").forEach((card) => {
+    const isSelected = card.dataset.planCard === selectedPlan;
+    card.classList.toggle("selected-plan-card", isSelected);
+    const button = card.querySelector("[data-select-plan]");
+    if (isSelected) {
+      button.textContent = "Selected for this demo";
+      button.disabled = true;
+      return;
+    }
+    button.disabled = false;
+    const label = button.dataset.selectPlan === "free"
+      ? "Get started free"
+      : `Choose ${planNames[button.dataset.selectPlan]}`;
+    button.innerHTML = `${label} <span aria-hidden="true">→</span>`;
+  });
+  checkoutDialog.close();
+  showToast(`${planNames[selectedPlan]} selected for this demo. No charge.`);
+  pendingPlan = null;
+}
+
+function toggleWeek() {
+  const list = document.querySelector("#window-list");
+  const button = document.querySelector("#show-week");
+  weekExpanded = !weekExpanded;
+  if (weekExpanded) {
+    const extras = [
+      [4, "Harvest & store", "Check cold-room space", "yellow-dot", "Plan"],
+      [5, "Review market rates", "Refresh your selling plan", "red-dot", "Check"],
+    ];
+    extras.forEach(([offset, title, detail, dotClass, rating]) => {
+      const date = new Date();
+      date.setDate(date.getDate() + offset + 1);
+      const item = document.createElement("article");
+      item.className = "window-item extra-window";
+      item.innerHTML = `<div class="window-date"><strong>${formatDate(date, { day: "2-digit" })}</strong><span>${formatDate(date, { weekday: "short" }).toUpperCase()}</span></div><div class="window-info"><strong>${title}</strong><span>${detail}</span></div><div class="window-rating"><span class="rating-dot ${dotClass}"></span><strong>${rating}</strong></div>`;
+      list.append(item);
+    });
+    button.innerHTML = 'Show less <span aria-hidden="true">↑</span>';
+  } else {
+    list.querySelectorAll(".extra-window").forEach((item) => item.remove());
+    button.innerHTML = 'View week <span aria-hidden="true">→</span>';
+  }
+}
+
+cropSelect.addEventListener("change", updateDashboard);
+marketSelect.addEventListener("change", updateDashboard);
+plannerMarket.addEventListener("change", updateGrossEstimate);
+harvestQuantityInput.addEventListener("input", updateGrossEstimate);
+document.querySelector("#planner-form").addEventListener("submit", saveHarvestPlan);
+checklist.addEventListener("change", updateChecklist);
+document.querySelector("#show-week").addEventListener("click", toggleWeek);
+billingMonthlyButton.addEventListener("click", () => setBillingPeriod("monthly"));
+billingYearlyButton.addEventListener("click", () => setBillingPeriod("yearly"));
+document.querySelectorAll("[data-select-plan]").forEach((button) => {
+  button.addEventListener("click", () => openPlanSelection(button.dataset.selectPlan));
+});
+document.querySelector("#confirm-plan").addEventListener("click", confirmPlanSelection);
+document.querySelector("#cancel-checkout").addEventListener("click", () => checkoutDialog.close());
+checkoutDialog.addEventListener("close", () => {
+  pendingPlan = null;
+});
+document.querySelector("#share-plan").addEventListener("click", () => {
+  shareMessage.value = makeShareMessage();
+  setShareStatus("");
+  shareDialog.showModal();
+});
+document.querySelector("#copy-share").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(shareMessage.value);
+    setShareStatus("Message copied. Share it in your farmer group.");
+  } catch (error) {
+    if (error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "SecurityError")) {
+      shareMessage.focus();
+      shareMessage.select();
+      setShareStatus("Clipboard access was blocked. Copy the selected message manually.", "error");
+      return;
+    }
+    throw error;
+  }
+});
+document.querySelector("#native-share").addEventListener("click", async () => {
+  if (!navigator.share) {
+    setShareStatus("Your browser does not support the share sheet. Copy the message instead.", "error");
+    return;
+  }
+  try {
+    await navigator.share({ title: "HarvestWindow harvest plan", text: shareMessage.value });
+    setShareStatus("Share sheet opened.");
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      setShareStatus("Sharing canceled.");
+      return;
+    }
+    if (error instanceof DOMException && error.name === "NotAllowedError") {
+      setShareStatus("Sharing is unavailable here. Copy the message instead.", "error");
+      return;
+    }
+    throw error;
+  }
+});
+document.querySelector("#use-plan").addEventListener("click", (event) => {
+  event.currentTarget.classList.add("plan-selected");
+  event.currentTarget.innerHTML = 'Plan selected <span aria-hidden="true">✓</span>';
+  showToast(`Your ${cropData[cropSelect.value].name} harvest plan is ready.`);
+});
+document.querySelector(".notification-button").addEventListener("click", () => {
+  showToast("You're all caught up on local harvest updates.");
+});
+document.querySelector(".more-button").addEventListener("click", () => {
+  showToast("Farm account settings are coming soon.");
 });
 
-exampleButton.addEventListener("click", () => {
-  messageInput.value = "URGENT: Your account will be suspended today! Verify your password now to claim your $500 gift card: http://bit.ly/account-verify";
-  messageInput.dispatchEvent(new Event("input", { bubbles: true }));
-  messageInput.focus();
-});
-
-checkAnotherButton.addEventListener("click", () => {
-  resultPanel.hidden = true;
-  messageInput.value = "";
-  messageInput.dispatchEvent(new Event("input", { bubbles: true }));
-  messageInput.focus();
-});
+updateDates();
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+harvestDateInput.min = getLocalDateString(tomorrow);
+harvestDateInput.value = getLocalDateString(tomorrow);
+document.querySelector("#native-share").hidden = typeof navigator.share !== "function";
+savedPlans = loadSavedPlans();
+renderSavedPlans();
+updateDashboard();
+updateChecklist();

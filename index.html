@@ -3,277 +3,341 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="Check suspicious messages and links with transparent, private, client-side scam detection heuristics."
-    />
-    <meta name="theme-color" content="#f7f8f4" />
-    <title>ScamShield — pause before you trust</title>
+    <meta name="description" content="A practical harvest planner for better timing, storage, and market decisions." />
+    <meta name="theme-color" content="#f5f5ef" />
+    <title>HarvestWindow — make every harvest count</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script src="app.js" defer></script>
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="#" aria-label="ScamShield home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none">
-            <path d="M16 3.5 27 8v7.3c0 7.1-4.8 11.3-11 13.2-6.2-1.9-11-6.1-11-13.2V8l11-4.5Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
-            <path d="m11.1 15.7 3.2 3.2 6.8-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
-        <span>scam<span class="brand-light">shield</span></span>
-      </a>
-      <div class="privacy-pill"><span class="privacy-dot"></span> Private by design</div>
-      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
-        <svg class="theme-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M17.1 12.2A7.2 7.2 0 0 1 7.8 2.9a7.3 7.3 0 1 0 9.3 9.3Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span id="theme-label">Dark</span>
-      </button>
-    </header>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#overview" aria-label="HarvestWindow home">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none"><path d="M18 30V17m0 5c-7 0-11-4-11-11 7 0 11 4 11 11Zm0-4c0-7 4-11 11-11 0 7-4 11-11 11Z" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="brand-name">harvest<span>window</span></span>
+        </a>
 
-    <main>
-      <section class="hero" aria-labelledby="page-title">
-        <div class="hero-copy">
-          <div class="eyebrow"><span class="eyebrow-line"></span> A calmer way to check</div>
-          <h1 id="page-title">Pause before<br />you <span>trust.</span></h1>
-          <p class="hero-description">
-            Something feel off? Check a message or link for common scam warning signs—in seconds, right here in your browser.
-          </p>
-          <div class="hero-proof">
-            <span class="proof-icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.5 16 5v4c0 3.9-2.6 6.2-6 7.3C6.6 15.2 4 12.9 4 9V5l6-2.5Z" stroke="currentColor" stroke-width="1.5"/><path d="m7.5 9.7 1.7 1.7 3.6-3.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span><strong>Your text stays yours.</strong> Nothing is uploaded or stored.</span>
-          </div>
+        <div class="farm-switcher">
+          <span class="farm-avatar">RK</span>
+          <span class="farm-identity"><strong>Ravi's farm</strong><small>Smallholder · Nashik</small></span>
+          <svg class="switcher-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
 
-        <div class="analyzer-card">
-          <div class="card-heading">
-            <div>
-              <span class="step-label">THE QUICK CHECK</span>
-              <h2>What would you like to check?</h2>
-            </div>
-            <span class="sparkle-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><path d="m12 2 1.9 7.1L21 11l-7.1 1.9L12 20l-1.9-7.1L3 11l7.1-1.9L12 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z" fill="currentColor"/></svg>
-            </span>
-          </div>
-          <p class="card-instruction">Paste a message or URL—or upload a screenshot or call recording to check it.</p>
+        <p class="nav-caption">WORKSPACE</p>
+        <nav class="nav-list">
+          <a class="nav-link active" href="#overview" aria-current="page">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/><rect x="11.5" y="2.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/><rect x="2.5" y="11.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/><rect x="11.5" y="11.5" width="6" height="6" rx="1.4" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span>Overview</span>
+          </a>
+          <a class="nav-link" href="#market">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 16.5V10m4.7 6.5V4.2m4.6 12.3V8m4.7 8.5V2.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span>Market signals</span><span class="nav-count">3</span>
+          </a>
+          <a class="nav-link" href="#harvest">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2.8" y="4.5" width="14.4" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 2.5v4m7-4v4M3 8.5h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span>Harvest plan</span>
+          </a>
+          <a class="nav-link" href="#handling">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m10 2.5 6.5 3.7v7.6L10 17.5l-6.5-3.7V6.2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m7 10.1 2 2 4-4.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Handling checklist</span>
+          </a>
+          <a class="nav-link" href="#membership">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m10 2.2 2.1 4.4 4.9.7-3.5 3.4.8 4.9-4.3-2.3-4.3 2.3.8-4.9L3 7.3l4.9-.7L10 2.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            <span>Membership</span>
+          </a>
+        </nav>
 
-          <section class="voice-check" aria-labelledby="voice-title">
-            <div class="voice-heading">
-              <div>
-                <span class="voice-eyebrow">SCAMSHIELD VOICEGUARD</span>
-                <h3 id="voice-title">🎙️ Check a suspicious call</h3>
-                <p>Upload a voice recording to transcribe it and check for scam warning signs.</p>
-              </div>
-              <span class="voice-lock" aria-hidden="true">
-                <svg viewBox="0 0 20 20" fill="none"><rect x="3.2" y="8" width="13.6" height="9.5" rx="1.8" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 8V5.5a3.7 3.7 0 0 1 7.4 0V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-              </span>
-            </div>
-            <input id="voice-input" class="visually-hidden voice-input" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.webm,.flac,.aiff,.aif" aria-describedby="voice-status voice-privacy" />
-            <label class="voice-dropzone" id="voice-dropzone" for="voice-input" tabindex="0">
-              <span class="voice-upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L7.8 8.2M12 4l4.2 4.2M5 14.5v3.7A1.8 1.8 0 0 0 6.8 20h10.4a1.8 1.8 0 0 0 1.8-1.8v-3.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-              <span class="voice-upload-copy"><strong>Choose a call recording</strong><span>or drag and drop an audio file</span></span>
-              <span class="voice-formats">MP3 · WAV · M4A · WEBM<br />up to 25 MB · 5 min</span>
-            </label>
-            <div class="voice-preview" id="voice-preview" hidden>
-              <audio id="voice-audio-preview" controls preload="metadata" aria-label="Preview of uploaded voice recording"></audio>
-              <div class="voice-file-info">
-                <strong id="voice-filename"></strong>
-                <span id="voice-progress">Ready to transcribe</span>
-                <progress id="voice-progress-bar" max="1" value="0" aria-label="Transcription progress" hidden></progress>
-              </div>
-              <button class="remove-screenshot" id="remove-voice" type="button" aria-label="Remove voice recording">×</button>
-            </div>
-            <div class="voice-steps" aria-label="Voice recording analysis steps">
-              <span><b>1</b> Upload</span><i aria-hidden="true">→</i>
-              <span><b>2</b> Transcribe</span><i aria-hidden="true">→</i>
-              <span><b>3</b> Analyze &amp; review</span>
-            </div>
-            <p class="voice-status" id="voice-status" role="status" aria-live="polite"></p>
-            <p class="voice-privacy" id="voice-privacy">Recording and transcript stay on this device. The pinned English speech model is downloaded from public CDNs on first use; no audio or transcript is uploaded. Transcription is English-only.</p>
-          </section>
-
-          <div class="input-divider"><span>OR UPLOAD A SCREENSHOT</span></div>
-          <section class="screenshot-check" aria-labelledby="screenshot-title">
-            <div class="screenshot-heading">
-              <div>
-                <h3 id="screenshot-title">Check a screenshot</h3>
-                <p>Choose or drop a screenshot. OCR and scam checks run in your browser.</p>
-              </div>
-              <span class="screenshot-lock" aria-hidden="true">
-                <svg viewBox="0 0 20 20" fill="none"><rect x="3.2" y="8" width="13.6" height="9.5" rx="1.8" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 8V5.5a3.7 3.7 0 0 1 7.4 0V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-              </span>
-            </div>
-            <input id="screenshot-input" class="visually-hidden screenshot-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-describedby="screenshot-status screenshot-privacy" />
-            <label class="screenshot-dropzone" id="screenshot-dropzone" for="screenshot-input" tabindex="0">
-              <span class="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L7.8 8.2M12 4l4.2 4.2M5 14.5v3.7A1.8 1.8 0 0 0 6.8 20h10.4a1.8 1.8 0 0 0 1.8-1.8v-3.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-              <span class="upload-copy"><strong>Upload a screenshot</strong><span>or drag and drop an image here</span></span>
-              <span class="upload-formats">PNG · JPG · WEBP · GIF · up to 10 MB</span>
-            </label>
-            <div class="screenshot-preview" id="screenshot-preview" hidden>
-              <img id="screenshot-image" alt="Preview of the selected screenshot" />
-              <div class="screenshot-file-info">
-                <strong id="screenshot-filename"></strong>
-                <span id="screenshot-progress">Ready to extract text</span>
-                <progress id="screenshot-progress-bar" max="1" value="0" aria-label="OCR progress" hidden></progress>
-              </div>
-              <button class="remove-screenshot" id="remove-screenshot" type="button" aria-label="Remove screenshot">×</button>
-            </div>
-            <div class="screenshot-steps" aria-label="Screenshot analysis steps">
-              <span><b>1</b> Upload</span><i aria-hidden="true">→</i>
-              <span><b>2</b> Extract text</span><i aria-hidden="true">→</i>
-              <span><b>3</b> Review report</span>
-            </div>
-            <p class="screenshot-status" id="screenshot-status" role="status" aria-live="polite"></p>
-            <p class="screenshot-privacy" id="screenshot-privacy">
-              Your image stays on this device. The OCR engine and English language data are downloaded when you first use this feature; no image or extracted text is uploaded.
-            </p>
-          </section>
-
-          <div class="input-divider"><span>OR PASTE TEXT</span></div>
-          <form id="analyzer-form" novalidate>
-            <label for="message-input" class="field-label">SUSPICIOUS MESSAGE OR LINK</label>
-            <div class="input-wrap">
-              <textarea
-                id="message-input"
-                name="message"
-                rows="6"
-                maxlength="10000"
-                placeholder="Paste a text, email, or website link here…"
-                aria-describedby="privacy-note character-count"
-                required
-              ></textarea>
-              <span class="input-decoration" aria-hidden="true">
-                <svg viewBox="0 0 20 20" fill="none"><path d="M8.2 10.8a3.2 3.2 0 0 0 4.5 0l3-3a3.2 3.2 0 0 0-4.5-4.5l-1.7 1.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11.8 9.2a3.2 3.2 0 0 0-4.5 0l-3 3a3.2 3.2 0 0 0 4.5 4.5l1.7-1.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-              </span>
-            </div>
-            <div class="field-meta">
-              <span id="privacy-note" class="privacy-note">
-                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3.3" y="7" width="9.4" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.3 7V4.8a2.7 2.7 0 0 1 5.4 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                Analyzed on your device
-              </span>
-              <span id="character-count">0 / 10,000</span>
-            </div>
-            <p class="form-error" id="form-error" role="alert" hidden>Please paste a message or link to check.</p>
-            <button class="analyze-button" type="submit">
-              <span>Check for warning signs</span>
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.2 10h11.6m0 0-4.8-4.8m4.8 4.8-4.8 4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </form>
-
-          <div class="try-example">
-            <span>Need an example?</span>
-            <button type="button" id="example-button">Try a sample message <span aria-hidden="true">↗</span></button>
-          </div>
-
-          <section class="result-panel" id="result-panel" aria-live="polite" aria-atomic="true" hidden>
-            <div class="result-top">
-              <div class="result-icon" id="result-icon" aria-hidden="true"></div>
-              <div class="result-heading">
-                <span class="result-kicker" id="result-kicker">ANALYSIS COMPLETE</span>
-                <h3 id="result-title"></h3>
-              </div>
-              <span class="risk-score" id="risk-score"></span>
-            </div>
-            <p class="result-summary" id="result-summary"></p>
-            <div class="result-reasons" id="result-reasons"></div>
-            <section class="scam-types" aria-labelledby="scam-types-title">
-              <div class="scam-types-heading">
-                <h4 id="scam-types-title">Scam type signals</h4>
-                <span class="scam-types-icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" fill="none"><path d="M3 16V10m4 6V5m5 11V8m4 8V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                </span>
-              </div>
-              <p class="scam-types-note">Heuristic match scores, not the probability that this is a scam.</p>
-              <div class="scam-type-list" id="scam-type-list"></div>
-            </section>
-              <section class="website-analysis" aria-labelledby="website-analysis-title">
-                <div class="website-analysis-heading">
-                  <div>
-                    <h4 id="website-analysis-title">Website analysis</h4>
-                    <p>On-device URL checks only. We don’t visit websites.</p>
-                  </div>
-                  <span class="website-analysis-icon" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.8 10h14.4M10 2.5c1.9 2 2.7 4.5 2.7 7.5s-.8 5.5-2.7 7.5C8.1 15.5 7.3 13 7.3 10s.8-5.5 2.7-7.5Z" stroke="currentColor" stroke-width="1.3"/></svg>
-                  </span>
-                </div>
-                <div class="website-list" id="website-list"></div>
-              </section>
-              <div class="advice-box">
-              <span class="advice-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.2a7.8 7.8 0 1 0 0 15.6 7.8 7.8 0 0 0 0-15.6Z" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v4.2m0-6.5v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-              </span>
-              <div><strong>What to do</strong><p id="result-advice"></p></div>
-            </div>
-            <button type="button" id="check-another" class="check-another">Check another message <span aria-hidden="true">↗</span></button>
-          </section>
+        <div class="sidebar-tip">
+          <span class="tip-sun" aria-hidden="true">☀</span>
+          <strong>A good day to plan ahead</strong>
+          <p>Check your market window before the morning harvest rush.</p>
+          <a href="#harvest">See your plan <span aria-hidden="true">↗</span></a>
         </div>
-      </section>
-
-      <section class="how-section" aria-labelledby="how-title">
-        <div class="section-intro">
-          <span class="section-kicker">A LITTLE CLARITY GOES A LONG WAY</span>
-          <h2 id="how-title">What we look for.</h2>
-          <p>Scams often follow familiar patterns. This quick check points them out so you can make a more informed choice.</p>
+        <div class="sidebar-bottom">
+          <a class="help-link" href="#about"><span class="help-mark">?</span> How it works</a>
+          <div class="user-row"><span class="user-avatar">RK</span><span><strong>Ravi K.</strong><small>Farmer account</small></span><button class="more-button" type="button" aria-label="More account options">···</button></div>
         </div>
-        <div class="signal-grid">
-          <article class="signal-card">
-            <span class="signal-number">01</span>
-            <span class="signal-icon signal-lilac" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 8.5h10.5a3.5 3.5 0 1 1 0 7H8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m8 12-3 3.5L8 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <h3>Too good to be true</h3>
-            <p>Unexpected prizes, giveaways, or promises of easy money.</p>
-          </article>
-          <article class="signal-card">
-            <span class="signal-number">02</span>
-            <span class="signal-icon signal-peach" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v9l5.5 3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
-            </span>
-            <h3>Pressure to act now</h3>
-            <p>Urgent deadlines designed to stop you from thinking twice.</p>
-          </article>
-          <article class="signal-card">
-            <span class="signal-number">03</span>
-            <span class="signal-icon signal-mint" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            </span>
-            <h3>Requests for secrets</h3>
-            <p>Asks for passwords, bank details, or personal information.</p>
-          </article>
-          <article class="signal-card">
-            <span class="signal-number">04</span>
-            <span class="signal-icon signal-blue" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            </span>
-            <h3>Unusual links</h3>
-            <p>Link shorteners, strange web addresses, and other URL clues.</p>
-          </article>
-        </div>
-      </section>
-
-      <aside class="disclaimer" aria-label="Important limitations">
-        <span class="disclaimer-icon" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.5 18 17H2l8-14.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 7v4m0 2.5v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </span>
-        <p><strong>A helpful heads-up, not a guarantee.</strong> ScamShield uses on-device text patterns and optional English speech recognition for educational purposes. It is not a security scanner, cannot verify whether a message, call, or website is genuine, and may miss scams or flag legitimate content. When in doubt, contact the organization through a channel you find independently.</p>
       </aside>
-    </main>
 
-    <footer class="site-footer">
-      <a class="brand footer-brand" href="#" aria-label="ScamShield home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 27 8v7.3c0 7.1-4.8 11.3-11 13.2-6.2-1.9-11-6.1-11-13.2V8l11-4.5Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m11.1 15.7 3.2 3.2 6.8-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        <span>scam<span class="brand-light">shield</span></span>
-      </a>
-      <span class="footer-copy">Made to help you think twice. <span aria-hidden="true">·</span> Your input never leaves this device.</span>
-    </footer>
+      <main class="main-content" id="overview">
+        <header class="topbar">
+          <div class="breadcrumb"><span>My farm</span><span class="crumb-divider">/</span><strong>Overview</strong></div>
+          <div class="topbar-actions">
+            <span class="updated-label"><span class="live-dot"></span> Updated just now</span>
+            <button class="icon-button notification-button" type="button" aria-label="Notifications">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M15.5 7.8a5.5 5.5 0 0 0-11 0c0 6.4-2 6.4-2 7.7h15c0-1.3-2-1.3-2-7.7ZM8 17.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <i aria-hidden="true"></i>
+            </button>
+          </div>
+        </header>
+
+        <div class="dashboard">
+          <section class="welcome-row">
+            <div>
+              <p class="date-line" id="today-date">MONDAY, OCTOBER 8</p>
+              <h1>Good morning, Ravi <span class="wave" aria-hidden="true">✳</span></h1>
+              <p class="welcome-copy">A little timing can make a big difference. Here's your harvest outlook.</p>
+            </div>
+            <label class="crop-picker">
+              <span class="crop-icon" aria-hidden="true">🍅</span>
+              <span class="crop-select-wrap"><small>YOUR CROP</small>
+                <select id="crop-select" aria-label="Select your crop">
+                  <option value="tomato">Tomatoes</option>
+                  <option value="onion">Onions</option>
+                  <option value="grapes">Grapes</option>
+                </select>
+              </span>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </label>
+          </section>
+
+          <section class="weather-strip" aria-label="Today's local conditions">
+            <div class="weather-icon" aria-hidden="true">☀</div>
+            <div class="weather-copy"><strong>Warm &amp; clear today</strong><span>Good conditions for picking before noon</span></div>
+            <div class="weather-stat"><span>HIGH</span><strong>31°</strong></div>
+            <div class="weather-stat"><span>HUMIDITY</span><strong>42%</strong></div>
+            <div class="weather-location"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 6.7c0 3.8-5 7.3-5 7.3S3 10.5 3 6.7a5 5 0 1 1 10 0Z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="6.5" r="1.6" stroke="currentColor" stroke-width="1.3"/></svg> Nashik, Maharashtra</div>
+          </section>
+
+          <section class="recommendation-card" id="harvest" aria-labelledby="recommendation-title">
+            <div class="recommendation-main">
+              <div class="recommendation-topline"><span class="status-dot"></span> YOUR HARVEST WINDOW <span class="confidence-tag">GOOD CONDITIONS</span></div>
+              <h2 id="recommendation-title">Wait until <span id="recommendation-day">tomorrow morning</span>.</h2>
+              <p class="recommendation-copy" id="recommendation-copy">Prices are trending up, and fewer nearby farms plan to bring tomatoes tomorrow. Picking early keeps quality high in the cooler hours.</p>
+              <div class="recommendation-actions">
+                <button class="primary-button" id="use-plan" type="button">Use this harvest plan <span aria-hidden="true">↗</span></button>
+                <span class="plan-note">A suggestion, not a guarantee.</span>
+              </div>
+            </div>
+            <div class="recommendation-art" aria-hidden="true">
+              <div class="sun-disc"></div>
+              <div class="art-hill hill-back"></div>
+              <div class="art-hill hill-front"></div>
+              <div class="art-row row-one"></div><div class="art-row row-two"></div><div class="art-row row-three"></div>
+              <div class="art-leaf leaf-one"></div><div class="art-leaf leaf-two"></div><div class="art-leaf leaf-three"></div>
+              <div class="art-label"><span>BEST PICK</span><strong>6–9 AM</strong></div>
+            </div>
+          </section>
+
+          <section class="metric-grid" aria-label="Harvest summary">
+            <article class="metric-card">
+              <div class="metric-header"><span>LOCAL MARKET PRICE</span><span class="metric-icon green-icon">₹</span></div>
+              <div class="metric-value"><strong id="price-value">₹ 1,840</strong><span class="unit">/ quintal</span></div>
+              <div class="metric-foot"><span class="trend-up">↗ <span id="price-change">8.2%</span></span><span>vs. last 7 days</span><span class="sparkline" aria-hidden="true"><svg viewBox="0 0 92 28" preserveAspectRatio="none"><path d="M1 22 12 18 21 20 32 13 42 17 52 10 61 13 72 6 82 10 91 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-header"><span>NEARBY ARRIVALS</span><span class="metric-icon amber-icon">↗</span></div>
+              <div class="metric-value"><strong id="arrival-value">Low</strong><span class="unit">expected tomorrow</span></div>
+              <div class="arrival-meter" aria-label="Low expected produce arrivals"><span class="meter-low"></span><span></span><span></span></div>
+              <div class="metric-caption"><span id="arrival-caption">About 12 farmers planning to sell</span></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-header"><span>STORAGE NEAR YOU</span><span class="metric-icon blue-icon">⌂</span></div>
+              <div class="metric-value"><strong>2 options</strong><span class="unit">within 8 km</span></div>
+              <div class="storage-foot"><span class="storage-status"></span><span>Cold room · 68% capacity</span><a href="#market">View <span aria-hidden="true">→</span></a></div>
+            </article>
+          </section>
+
+          <section class="planning-grid" aria-label="Harvest planning tools">
+            <article class="panel planner-panel" aria-labelledby="planner-title">
+              <div class="panel-heading">
+                <div><p class="panel-kicker">MAKE IT YOURS</p><h2 id="planner-title">Plan a harvest</h2></div>
+                <span class="planner-badge">SAVED ON THIS DEVICE</span>
+              </div>
+              <p class="planner-description">Set a date and quantity to estimate your gross sale at today's indicative market rate.</p>
+              <form id="planner-form">
+                <div class="planner-fields">
+                  <label class="planner-field" for="harvest-date"><span>PLANNED HARVEST</span><input id="harvest-date" name="date" type="date" required /></label>
+                  <label class="planner-field" for="harvest-quantity"><span>EXPECTED QUANTITY</span><span class="quantity-input"><input id="harvest-quantity" name="quantity" type="number" min="1" max="2000" step="1" value="25" required /><span>quintals</span></span></label>
+                  <label class="planner-field" for="planner-market"><span>SELL AT</span><select id="planner-market" name="market"><option value="lasalgaon">Lasalgaon APMC</option><option value="pimpalgaon">Pimpalgaon Baswant</option><option value="nashik">Nashik Market</option></select></label>
+                </div>
+                <div class="estimate-row"><span><span class="estimate-spark">↗</span> Indicative gross estimate</span><strong id="gross-estimate">₹ 46,000</strong></div>
+                <p class="estimate-disclaimer">Before transport, market fees, storage, or quality loss. Actual prices may vary.</p>
+                <button class="save-plan-button" type="submit">Save harvest plan <span aria-hidden="true">→</span></button>
+                <p class="planner-status" id="planner-status" role="status" aria-live="polite"></p>
+              </form>
+            </article>
+            <article class="panel saved-plans-panel" aria-labelledby="saved-plans-title">
+              <div class="panel-heading">
+                <div><p class="panel-kicker">YOUR FARM NOTES</p><h2 id="saved-plans-title">Harvest log</h2></div>
+                <span class="log-count" id="log-count">0 plans</span>
+              </div>
+              <p class="planner-description">Your saved plans stay in this browser and are not shared automatically.</p>
+              <div class="saved-plans-list" id="saved-plans-list">
+                <div class="empty-log"><span aria-hidden="true">▤</span><strong>No harvest plans yet</strong><span>Save a plan to start your log.</span></div>
+              </div>
+              <p class="log-note" id="log-note"></p>
+            </article>
+          </section>
+
+          <div class="content-grid">
+            <section class="panel price-panel" id="market" aria-labelledby="market-title">
+              <div class="panel-heading">
+                <div><p class="panel-kicker">KNOW BEFORE YOU GO</p><h2 id="market-title">Market price outlook</h2></div>
+                <label class="market-select"><span class="visually-hidden">Market</span><select id="market-select"><option value="lasalgaon">Lasalgaon APMC</option><option value="pimpalgaon">Pimpalgaon Baswant</option><option value="nashik">Nashik Market</option></select></label>
+              </div>
+              <div class="chart-legend"><span class="legend-current"></span> Current price <span class="legend-forecast"></span> Short-term outlook <span class="chart-unit">₹ / quintal</span></div>
+              <div class="chart-wrap">
+                <div class="y-labels" aria-hidden="true"><span>2,200</span><span>2,000</span><span>1,800</span><span>1,600</span></div>
+                <svg class="price-chart" id="price-chart" viewBox="0 0 620 205" role="img" aria-label="Tomato market price trend rising over the next three days">
+                  <defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#4a805d" stop-opacity=".16"/><stop offset="100%" stop-color="#4a805d" stop-opacity="0"/></linearGradient></defs>
+                  <path class="chart-gridline" d="M0 20H620M0 68H620M0 116H620M0 164H620"/>
+                  <path class="chart-area" id="chart-area" d="M0 124 C45 132 62 91 110 102 S176 118 220 88 S286 104 330 71 S400 85 445 56 S510 76 555 43 L620 29 L620 164 L0 164 Z"/>
+                  <path class="chart-line" id="chart-line" d="M0 124 C45 132 62 91 110 102 S176 118 220 88 S286 104 330 71 S400 85 445 56 S510 76 555 43 L620 29"/>
+                  <path class="chart-forecast" id="chart-forecast" d="M445 56 C490 66 510 76 555 43 L620 29"/>
+                  <circle class="chart-point" cx="445" cy="56" r="5"/>
+                  <circle class="chart-point-halo" cx="445" cy="56" r="10"/>
+                  <text class="chart-callout" x="418" y="37">TODAY · ₹1,840</text>
+                </svg>
+                <div class="x-labels" aria-hidden="true"><span>Oct 06</span><span>Oct 07</span><span>Today</span><span>Oct 09</span><span>Oct 10</span><span>Oct 11</span><span>Oct 12</span></div>
+              </div>
+              <div class="chart-insight"><span class="insight-icon">✳</span><span><strong>Prices may rise 5–8% by Thursday.</strong> Nearby arrivals are expected to stay below average.</span><span class="insight-disclaimer">Local estimate</span></div>
+              <p class="data-note">Market prices are indicative estimates. Confirm today's rate with your local mandi.</p>
+            </section>
+
+            <section class="panel windows-panel" aria-labelledby="windows-title">
+              <div class="panel-heading">
+                <div><p class="panel-kicker">NEXT 3 DAYS</p><h2 id="windows-title">Your best windows</h2></div>
+                <button class="text-button" id="show-week" type="button">View week <span aria-hidden="true">→</span></button>
+              </div>
+              <div class="window-list" id="window-list">
+                <article class="window-item recommended-window">
+                  <div class="window-date"><strong>09</strong><span>WED</span></div>
+                  <div class="window-info"><strong>Early morning pick</strong><span>Cool hours · lower arrivals</span></div>
+                  <div class="window-rating"><span class="rating-dot green-dot"></span><strong>Best</strong></div>
+                </article>
+                <article class="window-item">
+                  <div class="window-date"><strong>10</strong><span>THU</span></div>
+                  <div class="window-info"><strong>Morning pick</strong><span>Prices may peak · book a ride</span></div>
+                  <div class="window-rating"><span class="rating-dot yellow-dot"></span><strong>Good</strong></div>
+                </article>
+                <article class="window-item">
+                  <div class="window-date"><strong>11</strong><span>FRI</span></div>
+                  <div class="window-info"><strong>Harvest &amp; store</strong><span>More supply expected</span></div>
+                  <div class="window-rating"><span class="rating-dot red-dot"></span><strong>Wait</strong></div>
+                </article>
+              </div>
+              <div class="crowd-note"><span class="crowd-icon" aria-hidden="true">◎</span><p><strong>12 nearby farmers</strong> have shared plans for tomorrow. Fewer arrivals can mean less competition at the mandi.</p><button class="share-plan-button" id="share-plan" type="button">Share yours</button></div>
+            </section>
+          </div>
+
+          <section class="handling-panel" id="handling" aria-labelledby="handling-title">
+            <div class="handling-intro">
+              <span class="handling-icon" aria-hidden="true">✳</span>
+              <div><p class="panel-kicker">SMALL STEPS, BETTER QUALITY</p><h2 id="handling-title">Before the crates leave</h2><p>Good handling protects the value you've grown.</p></div>
+            </div>
+            <div class="checklist" id="checklist">
+              <label class="check-item"><input type="checkbox" /><span class="custom-check"></span><span>Harvest during cooler hours</span><span class="check-hint">6–9 AM</span></label>
+              <label class="check-item"><input type="checkbox" /><span class="custom-check"></span><span>Keep produce shaded after picking</span><span class="check-hint">Right away</span></label>
+              <label class="check-item"><input type="checkbox" /><span class="custom-check"></span><span>Use clean, ventilated crates</span><span class="check-hint">Avoid overfilling</span></label>
+            </div>
+            <div class="check-progress"><span id="check-progress-label">0 of 3 done</span><span class="progress-track"><span id="check-progress-bar"></span></span></div>
+          </section>
+
+          <section class="membership-section" id="membership" aria-labelledby="membership-title">
+            <div class="membership-heading">
+              <div>
+                <p class="panel-kicker">GROW WITH YOUR FARM</p>
+                <h2 id="membership-title">The right support for every season.</h2>
+                <p>Start free, then choose the tools that work for your farm.</p>
+              </div>
+              <div class="billing-control" role="group" aria-label="Billing period">
+                <button class="billing-option active" id="billing-monthly" type="button" aria-pressed="true">Monthly</button>
+                <button class="billing-option" id="billing-yearly" type="button" aria-pressed="false">Yearly <span>Save 20%</span></button>
+              </div>
+            </div>
+
+            <div class="membership-cards">
+              <article class="membership-card" data-plan-card="free">
+                <div class="membership-card-top"><span class="plan-icon free-plan-icon" aria-hidden="true">🌱</span><span class="plan-eyebrow">A good place to grow</span></div>
+                <h3>Free</h3>
+                <p class="plan-description">The essentials to make more informed harvest decisions.</p>
+                <div class="plan-price"><strong data-monthly="₹0" data-yearly="₹0">₹0</strong><span>/ month</span></div>
+                <p class="plan-billing-note" data-monthly-note="Free forever" data-yearly-note="Free forever">Free forever</p>
+                <button class="plan-button plan-button-light" type="button" data-select-plan="free">Get started free <span aria-hidden="true">→</span></button>
+                <div class="plan-includes"><strong>INCLUDES</strong>
+                  <ul><li><span>✓</span> Daily market outlook</li><li><span>✓</span> Harvest window suggestions</li><li><span>✓</span> Handling checklist</li><li class="feature-muted"><span>–</span> Saved plans &amp; harvest log</li><li class="feature-muted"><span>–</span> Community arrival signals</li></ul>
+                </div>
+              </article>
+
+              <article class="membership-card popular-card" data-plan-card="smart">
+                <div class="popular-ribbon"><span aria-hidden="true">★</span> MOST POPULAR</div>
+                <div class="membership-card-top"><span class="plan-icon smart-plan-icon" aria-hidden="true">🚜</span><span class="plan-eyebrow">For the growing farm</span></div>
+                <h3>Smart Farmer</h3>
+                <p class="plan-description">More visibility and planning power, right in your pocket.</p>
+                <div class="plan-price"><strong data-monthly="₹99" data-yearly="₹79" data-monthly-total="₹99 / month" data-yearly-total="₹950 / year">₹99</strong><span>/ month</span></div>
+                <p class="plan-billing-note" data-monthly-note="Billed monthly · cancel anytime" data-yearly-note="₹950 billed yearly">Billed monthly · cancel anytime</p>
+                <button class="plan-button plan-button-primary" type="button" data-select-plan="smart">Choose Smart Farmer <span aria-hidden="true">→</span></button>
+                <div class="plan-includes"><strong>EVERYTHING IN FREE, PLUS</strong>
+                  <ul><li><span>✓</span> 7-day price trends &amp; alerts</li><li><span>✓</span> Saved harvest plans &amp; log</li><li><span>✓</span> Local arrival signals</li><li><span>✓</span> Storage availability updates</li><li><span>✓</span> Share plans with your network</li></ul>
+                </div>
+              </article>
+
+              <article class="membership-card" data-plan-card="fpo">
+                <div class="membership-card-top"><span class="plan-icon fpo-plan-icon" aria-hidden="true">🏢</span><span class="plan-eyebrow">For teams &amp; collectives</span></div>
+                <h3>FPO Pro</h3>
+                <p class="plan-description">Coordinate harvests and market visibility across your FPO.</p>
+                <div class="plan-price"><strong data-monthly="₹499" data-yearly="₹399" data-monthly-total="₹499 / month" data-yearly-total="₹4,790 / year">₹499</strong><span>/ month</span></div>
+                <p class="plan-billing-note" data-monthly-note="Billed monthly · cancel anytime" data-yearly-note="₹4,790 billed yearly">Billed monthly · cancel anytime</p>
+                <button class="plan-button plan-button-dark" type="button" data-select-plan="fpo">Choose FPO Pro <span aria-hidden="true">→</span></button>
+                <div class="plan-includes"><strong>EVERYTHING IN SMART FARMER, PLUS</strong>
+                  <ul><li><span>✓</span> Up to 25 farmer accounts</li><li><span>✓</span> Group arrival calendar</li><li><span>✓</span> Collective market dashboard</li><li><span>✓</span> Shared storage coordination</li><li><span>✓</span> Priority FPO support</li></ul>
+                </div>
+              </article>
+            </div>
+
+            <div class="comparison-panel">
+              <div class="comparison-heading"><div><p class="panel-kicker">SIDE BY SIDE</p><h3>Compare membership features</h3></div><span>Choose what fits today. Change any time.</span></div>
+              <div class="comparison-scroll">
+                <table class="comparison-table">
+                  <thead><tr><th scope="col">FEATURE</th><th scope="col">Free</th><th scope="col">Smart Farmer</th><th scope="col">FPO Pro</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">Market price outlook</th><td>Daily</td><td>7-day trends</td><td>7-day group trends</td></tr>
+                    <tr><th scope="row">Harvest recommendations</th><td><span class="table-check" aria-label="Included">✓</span></td><td><span class="table-check" aria-label="Included">✓</span></td><td><span class="table-check" aria-label="Included">✓</span></td></tr>
+                    <tr><th scope="row">Saved harvest plans</th><td>—</td><td><span class="table-check" aria-label="Included">✓</span></td><td><span class="table-check" aria-label="Included">✓</span></td></tr>
+                    <tr><th scope="row">Community arrival signals</th><td>—</td><td><span class="table-check" aria-label="Included">✓</span></td><td><span class="table-check" aria-label="Included">✓</span></td></tr>
+                    <tr><th scope="row">Farmer accounts</th><td>1</td><td>1</td><td>Up to 25</td></tr>
+                    <tr><th scope="row">FPO coordination tools</th><td>—</td><td>—</td><td><span class="table-check" aria-label="Included">✓</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="membership-footnote">Demo pricing for illustration. No payment is collected, and plan selection does not activate a paid subscription.</p>
+          </section>
+
+          <footer class="dashboard-footer" id="about">
+            <span><span class="footer-leaf">✳</span> Better timing. Less waste. More value for your harvest.</span>
+            <span>Price and arrival signals are estimates based on shared local plans.</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <dialog class="share-dialog" id="share-dialog" aria-labelledby="share-dialog-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Close share dialog">×</button></form>
+      <p class="panel-kicker">NEIGHBORHOOD SIGNAL</p>
+      <h2 id="share-dialog-title">Share your harvest plan</h2>
+      <p class="share-dialog-copy">Sharing is optional. This demo does not send data to a farmer network; you can share this note yourself by copying it or using your device's share sheet.</p>
+      <label class="share-message-label" for="share-message">YOUR SHARE MESSAGE</label>
+      <textarea class="share-message" id="share-message" readonly rows="4"></textarea>
+      <p class="share-status" id="share-status" role="status" aria-live="polite"></p>
+      <div class="dialog-actions"><button class="dialog-secondary" id="copy-share" type="button">Copy message</button><button class="dialog-primary" id="native-share" type="button">Share…</button></div>
+    </dialog>
+    <dialog class="checkout-dialog" id="checkout-dialog" aria-labelledby="checkout-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Close plan selection">×</button></form>
+      <span class="checkout-icon" aria-hidden="true">✓</span>
+      <p class="panel-kicker">DEMO PLAN SELECTION</p>
+      <h2 id="checkout-title">Choose your plan</h2>
+      <p class="checkout-copy">This is a demo checkout. You will not be charged and no subscription will be created.</p>
+      <div class="checkout-summary"><span id="checkout-plan-name">Smart Farmer</span><strong id="checkout-plan-price">₹99 / month</strong></div>
+      <p class="checkout-billing" id="checkout-billing-note">Billed monthly · cancel anytime</p>
+      <p class="checkout-status" id="checkout-status" role="status" aria-live="polite"></p>
+      <div class="dialog-actions"><button class="dialog-secondary" id="cancel-checkout" type="button">Not now</button><button class="dialog-primary" id="confirm-plan" type="button">Confirm demo selection</button></div>
+    </dialog>
   </body>
 </html>
